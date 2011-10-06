@@ -3,74 +3,91 @@
 
 import mailbox, sys
 from optparse import OptionParser
+from pprint import pprint #FIXME debug only
 
-ml_mailbox = 'mbox_name.mbox'   # FIXME 
-file = 'report.html'            # FIXME
 
-class Author:   # Represents the author of the post (probably a subscriber of the list)
-    def __init__(self, name):
+
+# Dictionary of Authors
+class Authors:
+    def __init__(self):
+        self.authors = {}
+
+    def parse_msg(self, msg):
+        if (msg.from_mail not in self.authors):
+            author = Author(msg.from_mail, msg.date)
+            self.authors[msg.from_mail] = author
+        else:
+            self.authors[msg.from_mail].posts += 1
+            self.authors[msg.from_mail].date = msg.date
+
+# Represents the author of the post (probably a subscriber of the list
+class Author:
+    def __init__(self, mail, date):
         self.mail = mail
         self.posts = 1
         self.started = 0
-        self.name = name
         self.date = date
 
-def get_mail(string):   # Returns the content between the signs [<, >] 
-    x1 = string.find('<') + 1
-    x2 = string.find('>')
-    return string[x1:x2]
+class Message:
+    def __init__(self, message):
+        self.from_mail = self.get_mail(message['from'])
+        self.date = self.get_date(message['date'])
+        self.month = self.get_month(self.date)
+        self.year = self.get_year(self.date)
+        
+    # Returns the content between the signs [<, >] 
+    def get_mail(self, string):
+        x1 = string.find('<') + 1
+        x2 = string.find('>')
+        return string[x1:x2]
 
-def get_name(mail):    # Returns the name that appears before the @ [at] symbol
-    x1 = mail.find('@')
-    return mail[:x1]
+    # Converts the Datetime to a Date format
+    def get_date(self, date):
+        x1 = date.find(' ') + 1
+        x2 = date.replace(' ', '_', 3).find(' ')
+        return date[x1:x2]
 
-def get_date(date):    # Converts the Datetime to a Date format
-    x1 = date.find(' ') + 1
-    x2 = date.replace(' ', '_', 3).find(' ')
-    return date[x1:x2]
+    # Return the month from the Day Month Year format
+    def get_month(self, date):
+        x1 = date.find(' ') + 1
+        x2 = date.replace(' ', '_', 1).find(' ')
+        return date[x1:x2]
 
-def get_month(date):    # Return the month from the Day Month Year format
-    x1 = date.find(' ') + 1
-    x2 = date.replace(' ', '_', 1).find(' ')
-    return date[x1:x2]
+    # Returns the year from the Day Month Year format
+    def get_year(self, date):
+        x1 = date.replace(' ', '_', 1).find(' ') + 1
+        return date[x1:]
 
-def get_year(date):     # Returns the year from the Day Month Year format
-    x1 = date.replace(' ', '_', 1).find(' ') + 1
-    return date[x1:]
 
-parser = OptionParser(usage="usage: %prog [options] <mbox>")
-parser.add_option("-g", "--graph", default=False, dest="graph", help="Add graphs to the report")
-parser.add_option("-o", "--output", default="report.html", dest="output", help="Use this option to rename the output file or change the save path. Default: ./report.html")
-(options, args) = parser.parse_args()
-if len(args) < 1:
-    parser.print_help()
-    sys.exit()
-mbfile = args[0]
-print options
-auth_dic= {}    # A dictionary that stores all the objects of the 'Author' instance
-mbox = mailbox.mbox(mbfile)
-for message in mbox:
-    mail = get_mail(message['from'])
-    name = get_name(mail)
-    date = get_date(message['date'])
-    month = get_month(date)
-    year = get_year(date)
-    if (name not in auth_dic):   # If this is author's first mail an object is created
-        contact = Author(name)
-        auth_dic[name] = contact
-    else:
-        for contact in auth_dic:
-            if auth_dic[contact].name == name:
-                auth_dic[contact].posts += 1
-                auth_dic[contact].date = date
-try:
-    f = open(file, 'w')
+if __name__ == "__main__":
+    parser = OptionParser(usage="usage: %prog [options] <mbox>")
+    parser.add_option("-g", "--graph", default=False, dest="graph", help="Add graphs to the report")
+    parser.add_option("-o", "--output", default="report.html", dest="output", help="Use this option to rename the output file or change the save path. Default: ./report.html")
+    (options, args) = parser.parse_args()
+
+    # Arguments validation
+    if len(args) < 1:
+        parser.print_help()
+        sys.exit()
+
+    mbfile = args[0]
+    outputfile = options.output
+    authors = Authors()
+
+    mbox = mailbox.mbox(mbfile)
+
+    for message in mbox:
+        msg = Message(message)
+        authors.parse_msg(msg)    
+
+    f = open(outputfile, 'w')
     content = "<html><head></head><h1>Mailing List Stats</h1><table><tr><td>Name</td><td>Mails Sent</td><td>Last message</td></tr>"
-    for contact in auth_dic:
-        content += "<tr><td>" + str(auth_dic[contact].name) + "</td><td>" + str(auth_dic[contact].posts) + "</td><td>" + str(auth_dic[contact].date) + "</td></tr>"
+    a = authors.authors
+    for author in a:
+        content += "<tr><td>" + str(a[author].mail) + "</td><td>" + str(a[author].posts) + "</td><td>" + str(a[author].date) + "</td></tr>"
     content += "</table>"
     f.write(content)
     f.close()
-    print file + " was generated succesfully!"
-except:
-    print "Something went wrong!"
+    print outputfile + " was generated succesfully!"
+
+# vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4

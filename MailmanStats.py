@@ -1,10 +1,7 @@
 #!/usr/bin/python
-# Filename: ml_stats.py
-
 import mailbox, sys
 from optparse import OptionParser
 from pprint import pprint #FIXME debug only
-
 
 
 # Dictionary of Authors

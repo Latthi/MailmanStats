@@ -1,9 +1,10 @@
 #!/usr/bin/python
 # Filename: ml_stats.py
 
-import mailbox
+import mailbox, sys
+from optparse import OptionParser
 
-ml_mailbox = 'oss-events.mbox'   # FIXME 
+ml_mailbox = 'mbox_name.mbox'   # FIXME 
 file = 'report.html'            # FIXME
 
 class Author:   # Represents the author of the post (probably a subscriber of the list)
@@ -14,7 +15,7 @@ class Author:   # Represents the author of the post (probably a subscriber of th
         self.name = name
         self.date = date
 
-def get_mail(string):   # Rerurns the content between the signs [<, >] 
+def get_mail(string):   # Returns the content between the signs [<, >] 
     x1 = string.find('<') + 1
     x2 = string.find('>')
     return string[x1:x2]
@@ -37,8 +38,17 @@ def get_year(date):     # Returns the year from the Day Month Year format
     x1 = date.replace(' ', '_', 1).find(' ') + 1
     return date[x1:]
 
+parser = OptionParser(usage="usage: %prog [options] <mbox>")
+parser.add_option("-g", "--graph", default=False, dest="graph", help="Add graphs to the report")
+parser.add_option("-o", "--output", default="report.html", dest="output", help="Use this option to rename the output file or change the save path. Default: ./report.html")
+(options, args) = parser.parse_args()
+if len(args) < 1:
+    parser.print_help()
+    sys.exit()
+mbfile = args[0]
+print options
 auth_dic= {}    # A dictionary that stores all the objects of the 'Author' instance
-mbox = mailbox.mbox(ml_mailbox)
+mbox = mailbox.mbox(mbfile)
 for message in mbox:
     mail = get_mail(message['from'])
     name = get_name(mail)
@@ -53,10 +63,9 @@ for message in mbox:
             if auth_dic[contact].name == name:
                 auth_dic[contact].posts += 1
                 auth_dic[contact].date = date
-
 try:
     f = open(file, 'w')
-    content = "<html><head></head><h1>Mailing List stats</h1><table><tr><td>Name</td><td>Mails Sent</td><td>Last message</td></tr>"
+    content = "<html><head></head><h1>Mailing List Stats</h1><table><tr><td>Name</td><td>Mails Sent</td><td>Last message</td></tr>"
     for contact in auth_dic:
         content += "<tr><td>" + str(auth_dic[contact].name) + "</td><td>" + str(auth_dic[contact].posts) + "</td><td>" + str(auth_dic[contact].date) + "</td></tr>"
     content += "</table>"

@@ -1,6 +1,6 @@
-#!/usr/bin/python
-import mailbox, sys, re
+#!/usr/bin/env python
 
+import mailbox, sys, re, pyratemp
 from os import path
 from optparse import OptionParser
 from pprint import pprint #FIXME debug only
@@ -36,7 +36,7 @@ class Author:
     def __init__(self, mail, date):
         self.mail = mail
         self.posts = 1
-        self.started = 0 #FIXME what is this?
+        self.started = 0
         self.lastmsgdate = date
         self.subscrdate = ""
     def __str__(self):
@@ -110,13 +110,11 @@ if __name__ == "__main__":
     authors.print_authors() #FIXME Debug info
 
     f = open(outputfile, 'w')
-    content = "<html><head></head><h1>Mailing List Stats</h1><table><tr><td>Name</td><td>Mails Sent</td><td>Last message</td></tr>"
     a = authors.authors
-    for author in a:
-        content += "<tr><td>" + str(a[author].mail) + "</td><td>" + str(a[author].posts) + "</td><td>" + str(a[author].lastmsgdate) + "</td></tr>"
-    content += "</table>"
-    f.write(content)
+    t = pyratemp.Template(filename='report.tpl')
+    result = t(mydic=a)
+    f.write(result)
     f.close()
-    print outputfile + " was generated succesfully!"
+
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4

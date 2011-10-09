@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import mailbox, sys, re, pyratemp
 from os import path
 from optparse import OptionParser
@@ -19,13 +18,21 @@ class Authors:
             self.authors[msg.from_mail].posts += 1
             self.authors[msg.from_mail].lastmsgdate = msg.date
 
-    def fill_subscr_dates(self):
+    def parse_log_file(self):
         f = open(mbfile+"/logs/subscribe", "r")
         prog = re.compile("(^[^(]*)[^ ]*[ ]([^:]*)[:][ ]([dn])[^ ]*[ ]([^,;]*).*$") 
+        registered = []
         for line in f.readlines():
             r = prog.match(line)
             if r.group(4) in self.authors.keys() and r.group(3) == 'n':
-                self.authors[r.group(4)].subscrdate = r.group(1)[:-1]
+                self.authors[r.group(4)].subscrdate = r.group(1)[:-1] #FIXME store timestamp
+                if r.group(4) not in registered:
+                    registered.append(r.group(4))
+                
+        for author in self.authors.keys():
+            if author not in registered:
+                self.authors.pop(author)
+
 
     def print_authors(self):
         for author in self.authors:
@@ -55,7 +62,7 @@ class Message:
         x2 = string.find('>')
         return string[x1:x2]
 
-    # Converts the Datetime to a Date format
+    # Converts the Datetime to a Date format FIXME store timestamp!
     def get_date(self, date):
         x1 = date.find(' ') + 1
         x2 = date.replace(' ', '_', 3).find(' ')
@@ -74,9 +81,9 @@ class Message:
 
 
 if __name__ == "__main__":
-    parser = OptionParser(usage="usage: %prog [options] <mbox>")
+    parser = OptionParser(usage="usage: %prog [options] <Mailman's root directory>")
     parser.add_option("-g", "--graph", default=False, dest="graph", action="store_true", help="Add graphs to the report")
-    parser.add_option("-e", "--extended", default=False, dest="extended", action="store_true", help="Add extended information. Mailman's root directory is needed and not just the mbox file.")
+    parser.add_option("-m", "--minimal", default=False, dest="minimal", action="store_true", help="") #FIXME help text
     parser.add_option("-o", "--output", default="report.html", dest="output", help="Use this option to rename the output file or change the save path. Default: ./report.html")
     (options, args) = parser.parse_args()
 
@@ -84,16 +91,16 @@ if __name__ == "__main__":
     if len(args) < 1:
         parser.print_help()
         sys.exit()
-        
-    if (options.extended and not path.isdir(args[0])): #FIXME this check can be more clever!
-        print "With the extended enable you must give the root directory of Mailman."
+    
+    if not path.isdir(args[0]) or not path.exists(args[0]+"/archives") or not path.exists(args[0]+"/logs"):
+        print "lala" #FIXME error msg
         sys.exit()
 
     mbfile = args[0]
     outputfile = options.output
     authors = Authors()
 
-    if not options.extended:
+    if options.minimal:
          mbox = mailbox.mbox(mbfile)
     else:
          mbox = mailbox.mbox(mbfile+"/archives/private/team.mbox/team.mbox") # FIXME We should ask which mailing list to select
@@ -104,11 +111,11 @@ if __name__ == "__main__":
         authors.parse_msg(msg)    
 
     # Generate extended info
-    if options.extended:
-        authors.fill_subscr_dates()
+    if not options.minimal:
+        authors.parse_log_file()
     
-    authors.print_authors() #FIXME Debug info
-
+    #authors.print_authors() #FIXME Debug info
+    
     f = open(outputfile, 'w')
     a = authors.authors
     t = pyratemp.Template(filename='report.tpl')

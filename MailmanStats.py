@@ -80,10 +80,16 @@ if __name__ == "__main__":
     if len(args) < 1:
         parser.print_help()
         sys.exit()
-    
-    if not path.isdir(args[0]) or not path.exists(args[0]+"/archives") or not path.exists(args[0]+"/logs"):
-        print "Invalid Mailman's root directory!"
-        sys.exit()
+
+    if not options.minimal:
+        if not path.isdir(args[0]) or not path.exists(args[0]+"/archives") or not path.exists(args[0]+"/logs"):
+            print "Invalid Mailman's root directory!"
+            sys.exit()
+    else:
+        if not path.isfile(args[0]):
+            print "This is not a file!"
+            sys.exit()
+
 
     rootdir = args[0]
     outputfile = options.output

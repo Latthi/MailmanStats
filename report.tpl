@@ -14,10 +14,10 @@ table.sortable thead
 <body>
 <h1>Mailing List Stats</h1>
 <table class="sortable">
-<tr><th>Name</th><th>Mails Sent</th><th>Last Message</th></tr>
+<tr><th>Name</th><th>Mails Sent</th><th>Threads Started</th><th>Last Message</th></tr>
 <!--(for i in mydic)-->
 <tr>
-<td>@!mydic[i].mail!@</td><td>@!mydic[i].posts!@</td><td sorttable_customkey="@!int(mydic[i].lastmsgdate)!@">@!mydic[i].lastmsgdatestr!@</td>
+<td>@!mydic[i].mail!@</td><td>@!mydic[i].posts!@</td><td>@!mydic[i].started!@</td><td sorttable_customkey="@!int(mydic[i].lastmsgdate)!@">@!mydic[i].lastmsgdatestr!@</td>
 </tr>
 <!--(end)-->
 </table>

@@ -20,7 +20,7 @@ class Authors:
             self.authors[msg.from_mail].lastmsgdatestr= time.ctime(msg.date)
 
     def parse_log_file(self):
-        f = open(mbfile+"/logs/subscribe", "r")
+        f = open(rootdir+"/logs/subscribe", "r")
         prog = re.compile("(^[^(]*)[^ ]*[ ]([^:]*)[:][ ]([dn])[^ ]*[ ]([^,;]*).*$") 
         registered = []
         for line in f.readlines():
@@ -83,14 +83,27 @@ if __name__ == "__main__":
         print "lala" #FIXME error msg
         sys.exit()
 
-    mbfile = args[0]
+    rootdir = args[0]
     outputfile = options.output
     authors = Authors()
 
     if options.minimal:
-         mbox = mailbox.mbox(mbfile)
+         mbox = mailbox.mbox(rootdir)
     else:
-         mbox = mailbox.mbox(mbfile+"/archives/private/team.mbox/team.mbox") # FIXME We should ask which mailing list to select
+        mboxes = {}
+        i = 0
+        for (path, dirs, files) in os.walk(rootdir):
+            for f in files:
+                if 'mbox' in f:
+                    i += 1
+                    dot = f.find(".")
+                    ml = f[:dot]
+                    f = path + "/" + f
+                    print "[" + str(i) + "] " + ml
+                    mboxes[i] = f
+        choice = input("Choose your mailing list: ")
+        mbpath =  mboxes[choice]
+        mbox = mailbox.mbox(mbpath)
 
     # Parse all messages in mbox file
     for message in mbox:

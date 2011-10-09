@@ -80,7 +80,7 @@ if __name__ == "__main__":
         sys.exit()
     
     if not path.isdir(args[0]) or not path.exists(args[0]+"/archives") or not path.exists(args[0]+"/logs"):
-        print "lala" #FIXME error msg
+        print "Invalid Maiman's root directory!"
         sys.exit()
 
     rootdir = args[0]

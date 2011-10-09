@@ -25,13 +25,14 @@ class Authors:
         registered = []
         for line in f.readlines():
             r = prog.match(line)
-            t = time.strptime(r.group(1)[:-1], '%b %d %H:%M:%S %Y')
-            if r.group(4) in self.authors.keys() and r.group(3) == 'n':
-                self.authors[r.group(4)].subscrdate =  time.mktime(t)
-                self.authors[r.group(4)].subscrdatestr = time.asctime(t)
-                if r.group(4) not in registered:
-                    registered.append(r.group(4))
-                
+            if r:
+                t = time.strptime(r.group(1)[:-1], '%b %d %H:%M:%S %Y')
+                if r.group(4) in self.authors.keys() and r.group(3) == 'n':
+                    self.authors[r.group(4)].subscrdate =  time.mktime(t)
+                    self.authors[r.group(4)].subscrdatestr = time.asctime(t)
+                    if r.group(4) not in registered:
+                        registered.append(r.group(4))
+                    
         for author in self.authors.keys():
             if author not in registered:
                 self.authors.pop(author)
@@ -58,8 +59,9 @@ class Message:
     def __init__(self, message):
         self.from_mail = self.get_mail(message['from'])
         r = re.match("[^,]*[,][ ]([A-Za-z0-9: ]*)", message['date'])
-        t = time.strptime(r.group(1)[:-1], '%d %b %Y %H:%M:%S')
-        self.date = time.mktime(t)
+        if r:
+            t = time.strptime(r.group(1)[:-1], '%d %b %Y %H:%M:%S')
+            self.date = time.mktime(t)
         
     # Returns the content between the signs [<, >] 
     def get_mail(self, string):

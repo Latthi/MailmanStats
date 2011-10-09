@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import mailbox, sys, re, pyratemp, time
-from os import path
+from os import path, walk
 from optparse import OptionParser
 from pprint import pprint #FIXME debug only
 
@@ -92,7 +92,7 @@ if __name__ == "__main__":
     else:
         mboxes = {}
         i = 0
-        for (path, dirs, files) in os.walk(rootdir):
+        for (path, dirs, files) in walk(rootdir):
             for f in files:
                 if 'mbox' in f:
                     i += 1

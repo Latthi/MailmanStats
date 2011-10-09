@@ -21,7 +21,7 @@ class Authors:
 
     def parse_log_file(self):
         f = open(rootdir+"/logs/subscribe", "r")
-        prog = re.compile("(^[^(]*)[^ ]*[ ]([^:]*)[:][ ]([dn])[^ ]*[ ]([^,;]*).*$") 
+        prog = re.compile("(^[^(]*)[^ ]*[ ]([^:]*)[:][ ]([dn])[^ ]*[ ]([^,;]*).*$") #FIXME this will need to check if it is the correct mailing list 
         registered = []
         for line in f.readlines():
             r = prog.match(line)
@@ -58,9 +58,9 @@ class Author:
 class Message:
     def __init__(self, message):
         self.from_mail = self.get_mail(message['from'])
-        r = re.match("[^,]*[,][ ]([A-Za-z0-9: ]*)", message['date'])
+        r = re.match("[^,]*[,][ ]+([0-9]+[ ]+[A-Za-z]{3}[ ]+[0-9]{4}[ ]+[0-9:]{8}).*", message['date'])
         if r:
-            t = time.strptime(r.group(1)[:-1], '%d %b %Y %H:%M:%S')
+            t = time.strptime(r.group(1), '%d %b %Y %H:%M:%S')
             self.date = time.mktime(t)
         
     # Returns the content between the signs [<, >] 
@@ -92,26 +92,31 @@ if __name__ == "__main__":
 
 
     rootdir = args[0]
+    mlname = ""
     outputfile = options.output
     authors = Authors()
 
     if options.minimal:
          mbox = mailbox.mbox(rootdir)
     else:
-        mboxes = {}
-        i = 0
+        mboxes = []
+        mlnames = []
+        prog = re.compile("([^.]*).*")
+        i = 1
         for (path, dirs, files) in walk(rootdir):
             for f in files:
                 if 'mbox' in f:
-                    i += 1
-                    dot = f.find(".")
-                    ml = f[:dot]
+                    r = prog.match(f)
+                    ml = r.group(1)
                     f = path + "/" + f
                     print "[" + str(i) + "] " + ml
-                    mboxes[i] = f
+                    mboxes.append(f)
+                    mlnames.append(ml)
+                    i += 1
         choice = input("Choose your mailing list: ")
         mbpath =  mboxes[choice]
         mbox = mailbox.mbox(mbpath)
+        mlname = mlnames[choice]
 
     # Parse all messages in mbox file
     for message in mbox:

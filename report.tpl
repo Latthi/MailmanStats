@@ -2,7 +2,7 @@
 <head>
 <title>Mailing List Stats</title>
 <script src="sorttable.js"></script>
-<style>/* Sortable tables */
+<style>
 table.sortable thead
 {
     background-color:#eee;
@@ -14,10 +14,10 @@ table.sortable thead
 <body>
 <h1>Mailing List Stats</h1>
 <table class="sortable">
-<tr><td>Name</td><td>Mails Sent</td><td>Last Message</td><td></tr>
+<tr><th>Name</th><th>Mails Sent</th><th>Last Message</th></tr>
 <!--(for i in mydic)-->
 <tr>
-<td>@!mydic[i].mail!@</td><td>@!mydic[i].posts!@</td><td>@!mydic[i].lastmsgdate!@</td>
+<td>@!mydic[i].mail!@</td><td>@!mydic[i].posts!@</td><td sorttable_customkey="@!int(mydic[i].lastmsgdate)!@">@!mydic[i].lastmsgdatestr!@</td>
 </tr>
 <!--(end)-->
 </table>

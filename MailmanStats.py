@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import mailbox, sys, re, pyratemp
+import mailbox, sys, re, pyratemp, time
 from os import path
 from optparse import OptionParser
 from pprint import pprint #FIXME debug only
@@ -17,6 +17,7 @@ class Authors:
         else:
             self.authors[msg.from_mail].posts += 1
             self.authors[msg.from_mail].lastmsgdate = msg.date
+            self.authors[msg.from_mail].lastmsgdatestr= time.ctime(msg.date)
 
     def parse_log_file(self):
         f = open(mbfile+"/logs/subscribe", "r")
@@ -24,8 +25,10 @@ class Authors:
         registered = []
         for line in f.readlines():
             r = prog.match(line)
+            t = time.strptime(r.group(1)[:-1], '%b %d %H:%M:%S %Y')
             if r.group(4) in self.authors.keys() and r.group(3) == 'n':
-                self.authors[r.group(4)].subscrdate = r.group(1)[:-1] #FIXME store timestamp
+                self.authors[r.group(4)].subscrdate =  time.mktime(t)
+                self.authors[r.group(4)].subscrdatestr = time.asctime(t)
                 if r.group(4) not in registered:
                     registered.append(r.group(4))
                 
@@ -45,40 +48,24 @@ class Author:
         self.posts = 1
         self.started = 0
         self.lastmsgdate = date
-        self.subscrdate = ""
+        self.lastmsgdatestr = time.ctime(date)
+        self.subscrdate = 0 
+        self.subscrdatstr = ""
     def __str__(self):
         return self.mail+" "+str(self.posts)+" "+str(self.started)+" "+self.lastmsgdate+" | "+self.subscrdate
 
 class Message:
     def __init__(self, message):
         self.from_mail = self.get_mail(message['from'])
-        self.date = self.get_date(message['date'])
-        self.month = self.get_month(self.date)
-        self.year = self.get_year(self.date)
+        r = re.match("[^,]*[,][ ]([A-Za-z0-9: ]*)", message['date'])
+        t = time.strptime(r.group(1)[:-1], '%d %b %Y %H:%M:%S')
+        self.date = time.mktime(t)
         
     # Returns the content between the signs [<, >] 
     def get_mail(self, string):
         x1 = string.find('<') + 1
         x2 = string.find('>')
         return string[x1:x2]
-
-    # Converts the Datetime to a Date format FIXME store timestamp!
-    def get_date(self, date):
-        x1 = date.find(' ') + 1
-        x2 = date.replace(' ', '_', 3).find(' ')
-        return date[x1:x2]
-
-    # Return the month from the Day Month Year format
-    def get_month(self, date):
-        x1 = date.find(' ') + 1
-        x2 = date.replace(' ', '_', 1).find(' ')
-        return date[x1:x2]
-
-    # Returns the year from the Day Month Year format
-    def get_year(self, date):
-        x1 = date.replace(' ', '_', 1).find(' ') + 1
-        return date[x1:]
-
 
 if __name__ == "__main__":
     parser = OptionParser(usage="usage: %prog [options] <Mailman's root directory>")

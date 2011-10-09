@@ -1,13 +1,18 @@
-MailmanStats is a python script that generates an HTML report about a Mailman based mailing list.
+Authors:	George Chatzisofroniou
+		Constantinos Xanthopoulos
+
+Version:	Pre-Alpha (Just using github as shared repo)
+
+Description:	MailmanStats is a python script that generates an HTML report 
+		for a Mailman based mailing list.
 
 
-ToDo:
-  - Stats per subscriber
-  	- Average email sent per day
-	- Threads created
-	- Longest period w/o senting email
-	- Quickest reply
-  - Graphs
-  	- Total number of mails/user
-	- Threads created/user
-	- Monthly usage
+ToDo:		-Stats per subscriber
+			- Average email sent per day
+			- Threads created
+			- Longest period w/o senting email
+			- Quickest reply
+		- Graphs
+			- Total number of mails/user
+			- Threads created/user
+			- Monthly usage

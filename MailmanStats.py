@@ -18,6 +18,7 @@ class Authors:
             self.authors[msg.from_mail].posts += 1
             self.authors[msg.from_mail].lastmsgdate = msg.date
             self.authors[msg.from_mail].lastmsgdatestr= time.ctime(msg.date)
+	if "Re:" not in msg.subject: self.authors[msg.from_mail].started += 1
 
     def parse_log_file(self):
         f = open(rootdir+"/logs/subscribe", "r")
@@ -57,6 +58,7 @@ class Author:
 
 class Message:
     def __init__(self, message):
+        self.subject = message['subject']
         self.from_mail = self.get_mail(message['from'])
         r = re.match("[^,]*[,][ ]+([0-9]+[ ]+[A-Za-z]{3}[ ]+[0-9]{4}[ ]+[0-9:]{8}).*", message['date'])
         if r:

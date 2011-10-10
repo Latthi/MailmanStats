@@ -36,6 +36,7 @@ class Author:
         self.started = 0
         self.lastmsgdate = date
         self.lastmsgdatestr = time.ctime(date)
+        self.firstmsgdate = time.ctime(date) 
     def __str__(self):
         return self.mail+" "+str(self.posts)+" "+str(self.started)+" "+self.lastmsgdate
 

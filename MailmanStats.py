@@ -28,6 +28,15 @@ class Authors:
     def sort_authors(self):
         self.sorted_authors = sorted(self.authors, key=lambda x:self.authors[x].posts, reverse=True)
 
+    def create_pages(self):
+        for a in self.authors:
+            f = open(self.authors[a].name + '.html', 'w')
+            t = pyratemp.Template(filename='user.tpl')
+            result = t(author=self.authors[a])
+            f.write(result)
+
+
+
 # Represents the author of the post probably a subscriber of the list
 class Author:
     def __init__(self, mail, date):
@@ -37,6 +46,13 @@ class Author:
         self.lastmsgdate = date
         self.lastmsgdatestr = time.ctime(date)
         self.firstmsgdate = time.ctime(date) 
+        self.name = self.get_name(self.mail)
+
+    def get_name(self, mail):
+        at = mail.find('@')
+        mail = mail[:at]
+        return mail.replace('.', '_')
+ 
     def __str__(self):
         return self.mail+" "+str(self.posts)+" "+str(self.started)+" "+self.lastmsgdate
 
@@ -77,8 +93,9 @@ if __name__ == "__main__":
     # Parse all messages in mbox file
     for message in mbox:
         msg = Message(message)
-        authors.parse_msg(msg)    
-    
+        authors.parse_msg(msg)
+   
+    authors.create_pages() 
     authors.sort_authors()
 
     #authors.print_authors() #FIXME Debug info

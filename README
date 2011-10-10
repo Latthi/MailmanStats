@@ -16,7 +16,9 @@ Description:	MailmanStats is a python script that generates an HTML report
 Credits:	Roland Koebler (rk at simple-is-better dot org) for pyratemp
 		Stuart Langridge (sil at kryogenix dot org) for sorttable
 
-To Do:		-Stats per subscriber
+To Do:	- Total number of list threads
+          - Total number of list messages
+          - Stats per subscriber
 			- Average email sent per day
 			- Threads created
 			- Longest period w/o senting email

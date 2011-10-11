@@ -21,7 +21,7 @@ class Authors:
             self.authors[msg.from_mail].posts += 1
             self.authors[msg.from_mail].lastmsgdate = msg.date
             self.authors[msg.from_mail].lastmsgdatestr= time.ctime(msg.date)
-	if "Re:" not in msg.subject: self.authors[msg.from_mail].started += 1
+        if "Re:" not in msg.subject: self.authors[msg.from_mail].started += 1
 
     def print_authors(self):
         for author in self.authors:
@@ -32,17 +32,16 @@ class Authors:
 
     def create_pages(self):
         for a in self.authors:
-            f = open(self.authors[a].name + '.html', 'w')
+            f = open(self.authors[a].pagename, 'w')
             t = pyratemp.Template(filename='user.tpl')
             result = t(author=self.authors[a])
             f.write(result)
-    
+
     def plotEmailsPerAuthor(self):
         tmp = []
-        for a in self.sorted_authors:
-                tmp.append([a, authors.authors[a].posts])
+        for a in self.sorted_authors:  
+            tmp.append([a, authors.authors[a].posts])
         plotBarGraph(tmp, "ml-emailsperauthor.png", "Authors", "Emails")
-
 
 # Represents the author of the post probably a subscriber of the list
 class Author:
@@ -54,11 +53,15 @@ class Author:
         self.lastmsgdatestr = time.ctime(date)
         self.firstmsgdate = time.ctime(date) 
         self.name = self.get_name(self.mail)
+        self.pagename = self.get_pagename(self.mail)
+
+    def get_pagename(self, mail):
+        mail = mail.replace('@', 'at')
+        return  "ml-" + mail + ".html"
 
     def get_name(self, mail):
         at = mail.find('@')
-        mail = mail[:at]
-        return mail.replace('.', '_')
+        return mail[:at]
  
     def __str__(self):
         return self.mail+" "+str(self.posts)+" "+str(self.started)+" "+self.lastmsgdate
@@ -78,7 +81,6 @@ class Message:
         x2 = string.find('>')
         return string[x1:x2]
 
-
 ### GLOBAL FUNCTIONS ###
 def plotBarGraph(data, outputfile, xlabel, ylabel):
     theme.output_format = "png"
@@ -93,10 +95,10 @@ def plotBarGraph(data, outputfile, xlabel, ylabel):
     ar.add_plot(bar_plot.T(data = data, fill_style = fs))
     ar.draw()
 
-
 if __name__ == "__main__":
     parser = OptionParser(usage="usage: %prog [options] <mbox file>")
-    parser.add_option("-o", "--output", default="report.html", dest="output", help="Use this option to rename the output file or change the save path. Default: ./report.html")
+    parser.add_option("-g", "--graph", default=False, dest="graph", action="store_true", help="Add graphs to the report")
+    parser.add_option("-o", "--output", default="ml-report.html", dest="output", help="Use this option to rename the output file or change the save path. Default: ./report.html")
     (options, args) = parser.parse_args()
 
     # Arguments validation
@@ -111,7 +113,9 @@ if __name__ == "__main__":
     mbox = mailbox.mbox(args[0])
     outputfile = options.output
     authors = Authors()
-
+    dot = path.basename(args[0]).find('.')
+    mlname = path.basename(args[0])[:dot]
+    print mlname
     # Parse all messages in mbox file
     for message in mbox:
         msg = Message(message)
@@ -121,16 +125,15 @@ if __name__ == "__main__":
     authors.sort_authors()
 
     #authors.print_authors() #FIXME Debug info
-
+    
     f = open(outputfile, 'w')
     a = authors.authors
     b = authors.sorted_authors
     t = pyratemp.Template(filename='report.tpl')
-    result = t(mydic=a, sa=b)
+    result = t(heading=mlname, mydic=a, sa=b)
     f.write(result)
     f.close()
 
     authors.plotEmailsPerAuthor()
-
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4

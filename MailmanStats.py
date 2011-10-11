@@ -12,16 +12,22 @@ class Authors:
     def __init__(self):
         self.authors = {}
         self.sorted_authors = []
+        self.totalmails = 0                                                                                                                                                                                
+        self.totalthreads = 0
 
     def parse_msg(self, msg):
         if (msg.from_mail not in self.authors):
             author = Author(msg.from_mail, msg.date)
             self.authors[msg.from_mail] = author
+            self.totalmails += 1
         else:
+            self.totalmails += 1
             self.authors[msg.from_mail].posts += 1
             self.authors[msg.from_mail].lastmsgdate = msg.date
             self.authors[msg.from_mail].lastmsgdatestr= time.ctime(msg.date)
-        if "Re:" not in msg.subject: self.authors[msg.from_mail].started += 1
+        if "Re:" not in msg.subject:
+            self.authors[msg.from_mail].started += 1
+            self.totalthreads += 1
 
     def print_authors(self):
         for author in self.authors:
@@ -101,6 +107,10 @@ def plotBarGraph(data, outputfile, xlabel, ylabel):
     ar.add_plot(bar_plot.T(data = data, fill_style = fs))
     ar.draw()
 
+def get_mlname(mboxpath):
+    dot = path.basename(mboxpath).find(".")
+    return path.basename(args[0])[:dot]
+
 if __name__ == "__main__":
     parser = OptionParser(usage="usage: %prog [options] <mbox file>")
     parser.add_option("-g", "--graph", default=False, dest="graph", action="store_true", help="Add graphs to the report")
@@ -120,8 +130,7 @@ if __name__ == "__main__":
     outputfile = "ml-report.html"
     outputdir = options.output
     authors = Authors()
-    dot = path.basename(args[0]).find('.')
-    mlname = path.basename(args[0])[:dot]
+    mlname = get_mlname(args[0])
 
     # Create Directory for extra files
     try:
@@ -141,10 +150,8 @@ if __name__ == "__main__":
     #authors.print_authors() #FIXME Debug info
     
     f = open(outputfile, 'w')
-    a = authors.authors
-    b = authors.sorted_authors
     t = pyratemp.Template(filename='report.tpl')
-    result = t(heading=mlname, mydic=a, sa=b)
+    result = t(heading=mlname, totalmails=authors.totalmails, totalthreads=authors.totalthreads, mydic=authors.authors, sa=authors.sorted_authors)
     f.write(result)
     f.close()
 

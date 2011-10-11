@@ -1,9 +1,11 @@
 #!/usr/bin/env python
-import mailbox, sys, re, pyratemp, time
+import mailbox, sys, re, pyratemp, time, pickle
 from os import path, walk
 from optparse import OptionParser
+from pychart import *
 from pprint import pprint #FIXME debug only
 
+### CLASSES ###
 
 # Dictionary of Authors
 class Authors:
@@ -34,7 +36,12 @@ class Authors:
             t = pyratemp.Template(filename='user.tpl')
             result = t(author=self.authors[a])
             f.write(result)
-
+    
+    def plotEmailsPerAuthor(self):
+        tmp = []
+        for a in self.sorted_authors:
+                tmp.append([a, authors.authors[a].posts])
+        plotBarGraph(tmp, "ml-emailsperauthor.png", "Authors", "Emails")
 
 
 # Represents the author of the post probably a subscriber of the list
@@ -71,9 +78,24 @@ class Message:
         x2 = string.find('>')
         return string[x1:x2]
 
+
+### GLOBAL FUNCTIONS ###
+def plotBarGraph(data, outputfile, xlabel, ylabel):
+    theme.output_format = "png"
+    theme.output_file = outputfile
+    theme.scale_factor = 1.5
+    theme.use_color = True
+    theme.reinitialize()
+    xaxis = axis.X(format=lambda x: "/a80/T"+x, label="/b/15"+xlabel, tic_label_offset=(-5,0))
+    yaxis = axis.Y(label="/b/15"+ylabel, format="%d")
+    fs = fill_style.Plain(bgcolor=color.lightblue)
+    ar = area.T(size = (500,400), x_coord = category_coord.T(data, 0), x_axis = xaxis, y_axis = yaxis, y_range = (0,None), legend = None)
+    ar.add_plot(bar_plot.T(data = data, fill_style = fs))
+    ar.draw()
+
+
 if __name__ == "__main__":
     parser = OptionParser(usage="usage: %prog [options] <mbox file>")
-    parser.add_option("-g", "--graph", default=False, dest="graph", action="store_true", help="Add graphs to the report")
     parser.add_option("-o", "--output", default="report.html", dest="output", help="Use this option to rename the output file or change the save path. Default: ./report.html")
     (options, args) = parser.parse_args()
 
@@ -99,7 +121,7 @@ if __name__ == "__main__":
     authors.sort_authors()
 
     #authors.print_authors() #FIXME Debug info
-    
+
     f = open(outputfile, 'w')
     a = authors.authors
     b = authors.sorted_authors
@@ -107,6 +129,8 @@ if __name__ == "__main__":
     result = t(mydic=a, sa=b)
     f.write(result)
     f.close()
+
+    authors.plotEmailsPerAuthor()
 
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4

@@ -5,25 +5,25 @@
 | |  | | (_| | | | | | | | | (_| | | | |____) | |_| (_| | |_\__ \
 |_|  |_|\__,_|_|_|_| |_| |_|\__,_|_| |_|_____/ \__|\__,_|\__|___/
 -----------------------------------------------------------------
-Authors:	George Chatzisofroniou
-		Constantinos Xanthopoulos
+Authors:       George Chatzisofroniou
+               Constantinos Xanthopoulos
 
-Version:	Pre-Alpha (Just using github as shared repo)
+Version:       Pre-Alpha (Just using github as shared repo)
 
-Description:	MailmanStats is a python script that generates an HTML report 
-		for a Mailman based mailing list.
+Description:   MailmanStats is a python script that generates an HTML report 
+               for a Mailman based mailing list.
 
-Credits:	Roland Koebler (rk at simple-is-better dot org) for pyratemp
-		Stuart Langridge (sil at kryogenix dot org) for sorttable
+Credits:       Roland Koebler (rk at simple-is-better dot org) for pyratemp
+               Stuart Langridge (sil at kryogenix dot org) for sorttable
+               Yasushi Saito (yasushi at cs dot washington dot edu) for PyChart
 
-To Do:	- Total number of list threads
-          - Total number of list messages
-          - Stats per subscriber
-			- Average email sent per day
-			- Threads created
-			- Longest period w/o senting email
-			- Quickest reply
-		- Graphs
-			- Total number of mails/user
-			- Threads created/user
-			- Monthly usage
+To Do:         - Total number of list threads
+               - Total number of list messages
+               - Stats per subscriber
+                    - Average email sent per day
+                    - Threads created
+                    - Longest period w/o senting email
+                    - Quickest reply
+               - Graphs
+                    - Threads created/user
+                    - Monthly usage

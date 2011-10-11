@@ -43,6 +43,11 @@ class Authors:
                 tmp.append([a, authors.authors[a].posts])
         plotBarGraph(tmp, "ml-emailsperauthor.png", "Authors", "Emails")
 
+    def plotThreadsPerAuthor(self): #FIXME sorting
+        tmp = []
+        for a in self.sorted_authors:
+                tmp.append([a, authors.authors[a].started])
+        plotBarGraph(tmp, "ml-threadsperauthor.png", "Authors", "Threads")
 
 # Represents the author of the post probably a subscriber of the list
 class Author:
@@ -96,7 +101,7 @@ def plotBarGraph(data, outputfile, xlabel, ylabel):
 
 if __name__ == "__main__":
     parser = OptionParser(usage="usage: %prog [options] <mbox file>")
-    parser.add_option("-o", "--output", default="report.html", dest="output", help="Use this option to rename the output file or change the save path. Default: ./report.html")
+    parser.add_option("-o", "--output", default="./", dest="output", help="Use this option to change the output directory.")
     (options, args) = parser.parse_args()
 
     # Arguments validation
@@ -131,6 +136,7 @@ if __name__ == "__main__":
     f.close()
 
     authors.plotEmailsPerAuthor()
+    authors.plotThreadsPerAuthor()
 
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4

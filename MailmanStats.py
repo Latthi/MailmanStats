@@ -11,7 +11,8 @@ from pprint import pprint #FIXME debug only
 class Authors:
     def __init__(self):
         self.authors = {}
-        self.sorted_authors = []
+        self.sorted_authors_emails = []
+        self.sorted_authors_threads = []
         self.totalmails = 0                                                                                                                                                                                
         self.totalthreads = 0
 
@@ -34,7 +35,8 @@ class Authors:
             print(self.authors[author])
 
     def sort_authors(self):
-        self.sorted_authors = sorted(self.authors, key=lambda x:self.authors[x].posts, reverse=True)
+        self.sorted_authors_emails = sorted(self.authors, key=lambda x:self.authors[x].posts, reverse=True)
+        self.sorted_authors_threads = sorted(self.authors, key=lambda x:self.authors[x].started, reverse=True)
 
     def create_pages(self):
         for a in self.authors:
@@ -45,13 +47,13 @@ class Authors:
 
     def plotEmailsPerAuthor(self):
         tmp = []
-        for a in self.sorted_authors:  
+        for a in self.sorted_authors_emails:  
             tmp.append([a, authors.authors[a].posts])
         plotBarGraph(tmp, outputdir+"/ml-files/ml-emailsperauthor.png", "Authors", "Emails")
 
     def plotThreadsPerAuthor(self): #FIXME sorting
         tmp = []
-        for a in self.sorted_authors:
+        for a in self.sorted_authors_threads:
                 tmp.append([a, authors.authors[a].started])
         plotBarGraph(tmp, outputdir+"/ml-files/ml-threadsperauthor.png", "Authors", "Threads")
 
@@ -151,7 +153,7 @@ if __name__ == "__main__":
     
     f = open(outputfile, 'w')
     t = pyratemp.Template(filename='report.tpl')
-    result = t(heading=mlname, totalmails=authors.totalmails, totalthreads=authors.totalthreads, mydic=authors.authors, sa=authors.sorted_authors)
+    result = t(heading=mlname, totalmails=authors.totalmails, totalthreads=authors.totalthreads, mydic=authors.authors, sa=authors.sorted_authors_emails)
     f.write(result)
     f.close()
 

@@ -12,7 +12,7 @@ table.sortable thead
 }</style>
 </head>
 <body>
-<h1>@!author.name!@</h1>
+<h1>@!author.name!@ Stats</h1>
 <ul>
 <li>Author: @!author.mail!@</li>
 <li>Mails: @!author.posts!@</li>
@@ -20,3 +20,5 @@ table.sortable thead
 <li>First message: @!author.firstmsgdate!@</li>
 <li>Last message: @!author.lastmsgdatestr!@</li>
 </ul>
+</body>
+</html>

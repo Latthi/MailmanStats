@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import mailbox, sys, re, pyratemp, time, pickle
 from os import path, walk, mkdir
 from optparse import OptionParser
@@ -29,12 +30,17 @@ class Authors:
             self.authors[msg.from_mail].posts += 1
             self.authors[msg.from_mail].lastmsgdate = msg.date
             self.authors[msg.from_mail].lastmsgdatestr= time.ctime(msg.date)
-        if "Re:" not in msg.subject:
-            self.authors[msg.from_mail].started += 1
-            self.totalthreads += 1
-        else:
-            if msg.date - self.prevmsgtime < self.authors[msg.from_mail].shorttime: self.authors[msg.from_mail].shorttime = msg.date - self.prevmsgtime
-            if msg.date - self.prevmsgtime > self.authors[msg.from_mail].longtime: self.authors[msg.from_mail].longtime = msg.date - self.prevmsgtime
+
+        try:
+            if "Re:" not in msg.subject or not msg.subject:
+                self.authors[msg.from_mail].started += 1
+                self.totalthreads += 1
+            else:
+                if msg.date - self.prevmsgtime < self.authors[msg.from_mail].shorttime: self.authors[msg.from_mail].shorttime = msg.date - self.prevmsgtime
+                if msg.date - self.prevmsgtime > self.authors[msg.from_mail].longtime: self.authors[msg.from_mail].longtime = msg.date - self.prevmsgtime
+        except TypeError:
+            pass
+
         if msg.month not in self.totalmonth: self.totalmonth[msg.month] = 1
         if msg.month not in self.authors[msg.from_mail].monthdic: self.authors[msg.from_mail].monthdic[msg.month] = 1
         else: 
@@ -63,19 +69,19 @@ class Authors:
         for a in self.authors:
             f = open(outputdir+"/ml-files/"+self.authors[a].pagename, 'w')
             t = pyratemp.Template(filename='user.tpl')
-            result = t(author=self.authors[a])
+            result = t(author=self.authors[a], encoding="utf-8")
             f.write(result)
 
     def plotEmailsPerAuthor(self):
         tmp = []
         for a in self.sorted_authors_emails:  
-            tmp.append([a, authors.authors[a].posts])
+            tmp.append([a, self.authors[a].posts])
         plotBarGraph(tmp, outputdir+"/ml-files/ml-emailsperauthor.png", "Authors", "Emails")
 
     def plotThreadsPerAuthor(self):
         tmp = []
         for a in self.sorted_authors_threads:
-            tmp.append([a, authors.authors[a].started])
+            tmp.append([a, self.authors[a].started])
         plotBarGraph(tmp, outputdir+"/ml-files/ml-threadsperauthor.png", "Authors", "Threads")
 
     def plotMonthlyUsage(self):
@@ -136,13 +142,17 @@ class Author:
         return mail[:at]
 
     def __str__(self):
-        return self.mail+" "+str(self.posts)+" "+str(self.started)+" "+self.lastmsgdate
+        return self.mail+" "+str(self.posts)+" "+str(self.started)+" "+str(self.lastmsgdate)
 
 class Message:
     def __init__(self, message):
         self.subject = message['subject']
-        self.from_mail = self.getMail(message['from'])
-        r = re.match("[^,]*[,][ ]+([0-9]+[ ]+[A-Za-z]{3}[ ]+[0-9]{4}[ ]+[0-9:]{8}).*", message['date'])
+        prog = re.compile("[A-Za-z0-9._%+-]+[@][A-Za-z0-9.-]+[.][A-Za-z]{2,4}")
+        r = prog.search(message['from'])
+        if not r:
+            raise TypeError
+        self.from_mail = r.group(0)
+        r = re.match("[^0-9]*([0-9]+[ ]+[A-Za-z]{3}[ ]+[0-9]{4}[ ]+[0-9:]{8}).*", message['date'])
         if r:
             t = time.strptime(r.group(1), '%d %b %Y %H:%M:%S')
             self.date = time.mktime(t)
@@ -162,16 +172,22 @@ class Message:
 
 ### GLOBAL FUNCTIONS ###
 def plotBarGraph(data, outputfile, xlabel, ylabel):
+    cropped = []
     theme.output_format = "png"
     theme.output_file = outputfile
     theme.scale_factor = 1.5
     theme.use_color = True
     theme.reinitialize()
-    xaxis = axis.X(format=lambda x: "/a80/T"+x, label="/b/15"+xlabel, tic_label_offset=(-5,0))
+    for d in data:
+        if len(d[0]) > 21:
+            cropped.append([d[0][:21]+"...", d[1]])
+        else:
+            cropped.append([d[0], d[1]])
+    xaxis = axis.X(format=lambda x: "/a80/H"+x, label="/b/15"+xlabel, tic_label_offset=(-3,0))
     yaxis = axis.Y(label="/b/15"+ylabel, format="%d")
     fs = fill_style.Plain(bgcolor=color.lightblue)
-    ar = area.T(size = (500,400), x_coord = category_coord.T(data, 0), x_axis = xaxis, y_axis = yaxis, y_range = (0,None), legend = None)
-    ar.add_plot(bar_plot.T(data = data, fill_style = fs))
+    ar = area.T(size = (12*len(data)+50,400), x_coord = category_coord.T(cropped, 0), x_axis = xaxis, y_axis = yaxis, y_range = (0,None), legend = None)
+    ar.add_plot(bar_plot.T(data = cropped, fill_style = fs, data_label_format="%d", data_label_offset=(2,5)))
     ar.draw()
 
 def getMlName(mboxpath):
@@ -213,8 +229,12 @@ if __name__ == "__main__":
 
     # Parse all messages in mbox file
     for message in mbox:
-        msg = Message(message)
-        authors.parseMsg(msg)
+        try:
+            msg = Message(message)
+            authors.parseMsg(msg)
+        except TypeError:
+            continue
+        
 
     authors.calcStats()
 

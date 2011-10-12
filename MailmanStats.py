@@ -102,7 +102,7 @@ class Authors:
                 if int(yearmonth[:4]) == year:
                     peryear.append([months[int(yearmonth[-2:])-1], self.totalmonth[yearmonth]])
             peryear = sorted(peryear, key=lambda x: months.index(x[0]))
-            plotBarGraph(peryear, outputdir+"/ml-files/ml-usage-"+str(year)+".png", "Emails", "Months")
+            plotBarGraph(peryear, outputdir+"/ml-files/ml-usage-"+str(year)+".png", "Months", "Emails")
             peryear = []
 
 

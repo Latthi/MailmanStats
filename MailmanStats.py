@@ -6,15 +6,17 @@ from pychart import *
 from pprint import pprint #FIXME debug only
 
 ### CLASSES ###
-
 # Dictionary of Authors
 class Authors:
+
     def __init__(self):
         self.authors = {}
         self.sorted_authors_emails = []
         self.sorted_authors_threads = []
         self.totalmails = 0                                                                                                                                                                                
         self.totalthreads = 0
+        self.totalmonth = {}
+        self.prevmsgtime = 0
 
     def parse_msg(self, msg):
         if (msg.from_mail not in self.authors):
@@ -29,6 +31,21 @@ class Authors:
         if "Re:" not in msg.subject:
             self.authors[msg.from_mail].started += 1
             self.totalthreads += 1
+        else:
+            if msg.date - self.prevmsgtime < self.authors[msg.from_mail].shorttime: self.authors[msg.from_mail].shorttime = msg.date - self.prevmsgtime
+            if msg.date - self.prevmsgtime > self.authors[msg.from_mail].longtime: self.authors[msg.from_mail].longtime = msg.date - self.prevmsgtime
+        if msg.month not in self.totalmonth: self.totalmonth[msg.month] = 1
+        if msg.month not in self.authors[msg.from_mail].monthdic: self.authors[msg.from_mail].monthdic[msg.month] = 1
+        else: 
+            self.authors[msg.from_mail].monthdic[msg.month] += 1
+            self.totalmonth[msg.month] += 1
+        self.prevmsgtime = msg.date
+
+    def parse_dates(self):
+        for a in self.authors:  
+            pass    # Throws ValueError: timestamp out of range for platform time_t Probably needs another converter
+            #self.authors[a].shorttime = time.strftime('%d %b %Y %H:%M:%S', time.gmtime(self.authors[a].shorttime))
+            #self.authors[a].longtime = time.strftime('%d %b %Y %H:%M:%S', time.gmtime(self.authors[a].longtime)) 
 
     def print_authors(self):
         for author in self.authors:
@@ -68,6 +85,9 @@ class Author:
         self.firstmsgdate = time.ctime(date) 
         self.name = self.get_name(self.mail)
         self.pagename = self.get_pagename(self.mail)
+        self.monthdic = {}
+        self.shorttime = 999999999999999999999999999999999999
+        self.longtime = 0
 
     def get_pagename(self, mail):
         mail = mail.replace('@', 'at')
@@ -88,6 +108,12 @@ class Message:
         if r:
             t = time.strptime(r.group(1), '%d %b %Y %H:%M:%S')
             self.date = time.mktime(t)
+            self.month = self.get_month(r.group(1))
+
+    def get_month(self, date):
+        x1 = date.find(' ') + 1
+        x2 = date.replace(' ', '_', 2).find(' ')
+        return date[x1:x2].replace(' ', '_')
         
     # Returns the content between the signs [<, >] 
     def get_mail(self, string):
@@ -118,7 +144,6 @@ if __name__ == "__main__":
     parser.add_option("-g", "--graph", default=False, dest="graph", action="store_true", help="Add graphs to the report")
     parser.add_option("-o", "--output", default="./", dest="output", help="Use this option to change the output directory. Default: Current working directory.")
     (options, args) = parser.parse_args()
-
     # Arguments validation
     if len(args) < 1:
         parser.print_help()
@@ -145,7 +170,8 @@ if __name__ == "__main__":
     for message in mbox:
         msg = Message(message)
         authors.parse_msg(msg)
-   
+
+    authors.parse_dates() 
     authors.create_pages() 
     authors.sort_authors()
 

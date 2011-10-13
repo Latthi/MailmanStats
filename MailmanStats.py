@@ -109,7 +109,7 @@ class Authors:
 
     def calcAverage(self):
         for a in self.authors:
-            self.authors[a].average = str(self.authors[a].posts / int((time.time() - self.authors[a].firstmsgdate) / 86400))
+            self.authors[a].average = str(round(self.authors[a].posts / int((time.time() - self.authors[a].firstmsgdate) / 86400), 3))
 
     def calcStats(self):
         self.sortAuthors()
@@ -248,4 +248,3 @@ if __name__ == "__main__":
 
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
-

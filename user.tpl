@@ -27,9 +27,9 @@ h3
 <tr><td>Author:</td><td>@!author.mail!@</td></tr>
 <tr><td>Mails:</td><td>@!author.posts!@</td></tr>
 <tr><td>Threads started:</td><td>@!author.started!@</td></tr>
-<tr><td>First message:</td><td>@!author.firstmsgdate!@</td></tr>
+<tr><td>First message:</td><td>@!author.firstmsgdatestr!@</td></tr>
 <tr><td>Last message:</td><td>@!author.lastmsgdatestr!@</td></tr>
-<tr><td>Average:</td><td>@!author.average!@</td></tr>
+<tr><td>Average mails sent per day:</td><td>@!author.average!@</td><td></tr>
 </table>
 
 <h3>Monthly Usage Charts</h3>

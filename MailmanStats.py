@@ -1,15 +1,48 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import mailbox, sys, re, pyratemp, time, pickle
+import mailbox, sys, re, pyratemp, time
 from os import path, walk, mkdir
 from optparse import OptionParser
 from pychart import *
 from pprint import pprint #FIXME debug only
 
-### CLASSES ###
+### GLOBAL ###
+# Constants
+MAILPROG = re.compile("[A-Za-z0-9._%+-]+[@][A-Za-z0-9.-]+[.][A-Za-z]{2,4}")
+DATEPROG = re.compile("[^0-9]*([0-9]+[ ]+[A-Za-z]{3}[ ]+[0-9]{4}[ ]+[0-9:]{8}).*")
+MONTHPROG = re.compile("[0-9]+[ ]([A-Za-z]{3})[ ]([0-9]{4}).*")
+
+# Functions
+def plotBarGraph(data, outputfile, xlabel, ylabel):
+    cropped = []
+    theme.output_format = "png"
+    theme.output_file = outputfile
+    theme.scale_factor = 1.5
+    theme.use_color = True
+    theme.reinitialize()
+    for d in data:
+        if len(d[0]) > 21:
+            cropped.append([d[0][:21]+"...", d[1]])
+        else:
+            cropped.append([d[0], d[1]])
+    xaxis = axis.X(format=lambda x: "/a80/H"+x, label="/b/15"+xlabel, tic_label_offset=(-3,0))
+    yaxis = axis.Y(label="/b/15"+ylabel, format="%d")
+    fs = fill_style.Plain(bgcolor=color.lightblue)
+    ar = area.T(size = (12*len(data)+50,400), x_coord = category_coord.T(cropped, 0), x_axis = xaxis, y_axis = yaxis, y_range = (0,None), legend = None)
+    ar.add_plot(bar_plot.T(data = cropped, fill_style = fs, data_label_format="/a75{}%d", data_label_offset=(3,10)))
+    ar.draw()
+
+def getMlName(mboxpath):
+    dot = path.basename(mboxpath).find(".")
+    return path.basename(args[0])[:dot]
+
+
+def dictSub(text, dictionary):
+    prog = re.compile('|'.join(map(re.escape, dictionary)))
+    return prog.sub(str(dictionary[prog.match(text).group(0)]), text)
+
 # Dictionary of Authors
 class Authors:
-
     def __init__(self):
         self.authors = {}
         self.sorted_authors_emails = []
@@ -73,15 +106,11 @@ class Authors:
             f.write(result)
 
     def plotEmailsPerAuthor(self):
-        tmp = []
-        for a in self.sorted_authors_emails:  
-            tmp.append([a, self.authors[a].posts])
+        tmp = [[a, self.authors[a].posts] for a in self.sorted_authors_emails]
         plotBarGraph(tmp, outputdir+"/ml-files/ml-emailsperauthor.png", "Authors", "Emails")
 
     def plotThreadsPerAuthor(self):
-        tmp = []
-        for a in self.sorted_authors_threads:
-            tmp.append([a, self.authors[a].started])
+        tmp = [[a, self.authors[a].started] for a in self.sorted_authors_threads]
         plotBarGraph(tmp, outputdir+"/ml-files/ml-threadsperauthor.png", "Authors", "Threads")
 
     def plotMonthlyUsage(self):
@@ -116,8 +145,6 @@ class Authors:
         for author in self.authors:
             print(self.authors[author])
 
-
-
 # Represents the author of the post probably a subscriber of the list
 class Author:
     def __init__(self, mail, date):
@@ -147,57 +174,21 @@ class Author:
 class Message:
     def __init__(self, message):
         self.subject = message['subject']
-        prog = re.compile("[A-Za-z0-9._%+-]+[@][A-Za-z0-9.-]+[.][A-Za-z]{2,4}")
-        r = prog.search(message['from'])
+        r= MAILPROG.search(message['from'])
         if not r:
             raise TypeError
         self.from_mail = r.group(0)
-        r = re.match("[^0-9]*([0-9]+[ ]+[A-Za-z]{3}[ ]+[0-9]{4}[ ]+[0-9:]{8}).*", message['date'])
+        r = DATEPROG.match(message['date'])
         if r:
             t = time.strptime(r.group(1), '%d %b %Y %H:%M:%S')
             self.date = time.mktime(t)
             self.month = self.getMonth(r.group(1))
 
     def getMonth(self, date):
-        r = re.match("[0-9]+[ ]([A-Za-z]{3})[ ]([0-9]{4}).*", date)
+        r = MONTHPROG.match(date)
         months = {"Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6, "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12}
         month = dictSub(r.group(1), months)
         return "%s%02d" % (r.group(2), int(month))
-
-    # Returns the content between the signs [<, >] 
-    def getMail(self, string):
-        x1 = string.find('<') + 1
-        x2 = string.find('>')
-        return string[x1:x2]
-
-### GLOBAL FUNCTIONS ###
-def plotBarGraph(data, outputfile, xlabel, ylabel):
-    cropped = []
-    theme.output_format = "png"
-    theme.output_file = outputfile
-    theme.scale_factor = 1.5
-    theme.use_color = True
-    theme.reinitialize()
-    for d in data:
-        if len(d[0]) > 21:
-            cropped.append([d[0][:21]+"...", d[1]])
-        else:
-            cropped.append([d[0], d[1]])
-    xaxis = axis.X(format=lambda x: "/a80/H"+x, label="/b/15"+xlabel, tic_label_offset=(-3,0))
-    yaxis = axis.Y(label="/b/15"+ylabel, format="%d")
-    fs = fill_style.Plain(bgcolor=color.lightblue)
-    ar = area.T(size = (12*len(data)+50,400), x_coord = category_coord.T(cropped, 0), x_axis = xaxis, y_axis = yaxis, y_range = (0,None), legend = None)
-    ar.add_plot(bar_plot.T(data = cropped, fill_style = fs, data_label_format="/a75{}%d", data_label_offset=(3,10)))
-    ar.draw()
-
-def getMlName(mboxpath):
-    dot = path.basename(mboxpath).find(".")
-    return path.basename(args[0])[:dot]
-
-
-def dictSub(text, dictionary):
-    prog = re.compile('|'.join(map(re.escape, dictionary)))
-    return prog.sub(str(dictionary[prog.match(text).group(0)]), text)
 
 
 if __name__ == "__main__":
@@ -221,6 +212,7 @@ if __name__ == "__main__":
     authors = Authors()
     mlname = getMlName(args[0])
 
+
     # Create Directory for extra files
     try:
         mkdir(outputdir+"/ml-files/")
@@ -234,7 +226,6 @@ if __name__ == "__main__":
             authors.parseMsg(msg)
         except TypeError:
             continue
-        
 
     authors.calcStats()
 
@@ -244,5 +235,7 @@ if __name__ == "__main__":
     result = t(heading=mlname, totalmails=authors.totalmails, totalthreads=authors.totalthreads, mydic=authors.authors, sa=authors.sorted_authors_emails, yr=authors.years)
     f.write(result)
     f.close()
+
+
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4

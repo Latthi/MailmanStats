@@ -9,16 +9,25 @@ table.sortable thead
     color:#666666;
     font-weight: bold;
     cursor: default;
-}</style>
+}
+th
+{
+     text-align: left;
+}
+h3
+{
+	background-color: lightblue;
+}
+</style>
 </head>
 <body>
-<h1>@!author.name!@ Stats</h1>
-<ul>
-<li>Author: @!author.mail!@</li>
-<li>Mails: @!author.posts!@</li>
-<li>Threads started:  @!author.started!@</li>
-<li>First message: @!author.firstmsgdate!@</li>
-<li>Last message: @!author.lastmsgdatestr!@</li>
-</ul>
+<h3>@!author.name!@ Stats</h3>
+<table>
+<tr><td>Author:</td><td>@!author.mail!@</td></tr>
+<tr><td>Mails:</td><td>@!author.posts!@</td></tr>
+<tr><td>Threads started:</td><td>@!author.started!@</td></tr>
+<tr><td>First message:</td><td>@!author.firstmsgdate!@</td></tr>
+<tr><td>Last message:</td><td>@!author.lastmsgdatestr!@</td></tr>
+</table>
 </body>
 </html>

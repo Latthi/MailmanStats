@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from __future__ import division
 import mailbox, sys, re, pyratemp, time
 from os import path, walk, mkdir
 from optparse import OptionParser
@@ -50,7 +51,6 @@ class Authors:
         self.totalmails = 0                                                                                                                                                                                
         self.totalthreads = 0
         self.totalmonth = {}
-        self.prevmsgtime = 0
         self.years = []
 
     def parseMsg(self, msg):
@@ -76,7 +76,10 @@ class Authors:
         else: 
             self.authors[msg.from_mail].monthdic[msg.month] += 1
             self.totalmonth[msg.month] += 1
-        self.prevmsgtime = msg.date
+
+    def calcAverage(self):
+        for a in self.authors:
+            self.authors[a].average = str(self.authors[a].posts / int((time.time() - self.authors[a].firstmsgdate) / 86400))
 
     def calcStats(self):
         self.sortAuthors()
@@ -93,7 +96,7 @@ class Authors:
         for a in self.authors:
             f = open(outputdir+"/ml-files/"+self.authors[a].pagename, 'w')
             t = pyratemp.Template(filename='user.tpl')
-            result = t(author=self.authors[a], encoding="utf-8")
+            result = t(heading=mlname, author=self.authors[a], encoding="utf-8")
             f.write(result)
 
     def plotEmailsPerAuthor(self):
@@ -144,10 +147,12 @@ class Author:
         self.started = 0
         self.lastmsgdate = date
         self.lastmsgdatestr = time.ctime(date)
-        self.firstmsgdate = time.ctime(date) 
+        self.firstmsgdate = date
+        self.firstmsgdatestr = time.ctime(date) 
         self.name = self.getName(self.mail)
         self.pagename = self.getPagename(self.mail)
         self.monthdic = {}
+        self.average = 0
 
     def getPagename(self, mail):
         mail = mail.replace('@', 'at')
@@ -216,6 +221,7 @@ if __name__ == "__main__":
         except TypeError:
             continue
 
+    authors.calcAverage()
     authors.calcStats()
 
     #  Generate ml-report.html

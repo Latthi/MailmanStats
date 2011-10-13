@@ -21,6 +21,7 @@ h3
 </style>
 </head>
 <body>
+<h1>'@!heading!@' Mailing List Stats</h1>
 <h3>@!author.name!@ Stats</h3>
 <table>
 <tr><td>Author:</td><td>@!author.mail!@</td></tr>
@@ -28,6 +29,7 @@ h3
 <tr><td>Threads started:</td><td>@!author.started!@</td></tr>
 <tr><td>First message:</td><td>@!author.firstmsgdate!@</td></tr>
 <tr><td>Last message:</td><td>@!author.lastmsgdatestr!@</td></tr>
+<tr><td>Average:</td><td>@!author.average!@</td></tr>
 </table>
 </body>
 </html>

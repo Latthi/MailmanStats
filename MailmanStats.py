@@ -42,6 +42,36 @@ def dictSub(text, dictionary):
     prog = re.compile('|'.join(map(re.escape, dictionary)))
     return prog.sub(str(dictionary[prog.match(text).group(0)]), text)
 
+
+def monthlySort(data):
+    months = ["January", "February", "March", "April", "May", "June", "Julu", "August", "September", "Octomber", "November", "December"]
+    firstyear = int(min(data.keys())[:4])
+    lastyear = int(max(data.keys())[:4])
+    firstmonth = int(min(data.keys())[-2:])
+    peryear = []
+    r = ""
+    y = firstyear
+    m = firstmonth
+    years = {}
+
+    while r != max(data.keys()):
+        m += 1
+        if m % 12 == 1:
+            m = 1
+            y += 1
+        r = "%i%02d" % (y,m)
+        if r not in data:
+            data[r] = 0
+
+    for year in range(firstyear, lastyear+1):
+        for yearmonth in data.keys():
+            if int(yearmonth[:4]) == year:
+                peryear.append([months[int(yearmonth[-2:])-1], data[yearmonth]])
+        years[year] = sorted(peryear, key=lambda x: months.index(x[0]))
+        peryear = []
+    return (years, firstyear, lastyear+1)
+
+
 # Dictionary of Authors
 class Authors:
     def __init__(self):
@@ -94,7 +124,11 @@ class Authors:
 
     def createUserPages(self):
         for a in self.authors:
-            f = open(outputdir+"/ml-files/"+self.authors[a].pagename, 'w')
+            peryear, fy, ly = monthlySort(self.authors[a].monthdic)
+            for year in xrange(fy, ly):
+                self.authors[a].years.append(year)
+                plotBarGraph(peryear[year], outputdir+"/ml-files/ml-"+self.authors[a].pagename+"-usage-"+str(year)+".png", "Months", "Emails")
+            f = open(outputdir+"/ml-files/ml-"+self.authors[a].pagename+".html", 'w')
             t = pyratemp.Template(filename='user.tpl')
             result = t(heading=mlname, author=self.authors[a], encoding="utf-8")
             f.write(result)
@@ -108,31 +142,10 @@ class Authors:
         plotBarGraph(tmp, outputdir+"/ml-files/ml-threadsperauthor.png", "Authors", "Threads")
 
     def plotMonthlyUsage(self):
-        months = ["January", "February", "March", "April", "May", "June", "Julu", "August", "September", "Octomber", "November", "December"]
-        firstyear = int(min(self.totalmonth.keys())[:4])
-        lastyear = int(max(self.totalmonth.keys())[:4])
-        firstmonth = int(min(self.totalmonth.keys())[-2:])
-        peryear = []
-        r = ""
-        y = firstyear
-        m = firstmonth
-        while r != max(self.totalmonth.keys()):
-            m += 1
-            if m % 12 == 1:
-                m = 1
-                y += 1
-            r = "%i%02d" % (y,m)
-            if r not in self.totalmonth:
-                self.totalmonth[r] = 0
-
-        for year in range(firstyear, lastyear+1):
+        peryear, fy, ly = monthlySort(self.totalmonth)
+        for year in xrange(fy, ly):
             self.years.append(year)
-            for yearmonth in self.totalmonth.keys():
-                if int(yearmonth[:4]) == year:
-                    peryear.append([months[int(yearmonth[-2:])-1], self.totalmonth[yearmonth]])
-            peryear = sorted(peryear, key=lambda x: months.index(x[0]))
-            plotBarGraph(peryear, outputdir+"/ml-files/ml-usage-"+str(year)+".png", "Months", "Emails")
-            peryear = []
+            plotBarGraph(peryear[year], outputdir+"/ml-files/ml-usage-"+str(year)+".png", "Months", "Emails")
 
 
     def __str__(self):
@@ -152,11 +165,12 @@ class Author:
         self.name = self.getName(self.mail)
         self.pagename = self.getPagename(self.mail)
         self.monthdic = {}
+        self.years = []
         self.average = 0
 
     def getPagename(self, mail):
         mail = mail.replace('@', 'at')
-        return  "ml-" + mail + ".html"
+        return  mail
 
     def getName(self, mail):
         at = mail.find('@')

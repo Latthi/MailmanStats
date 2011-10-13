@@ -31,5 +31,13 @@ h3
 <tr><td>Last message:</td><td>@!author.lastmsgdatestr!@</td></tr>
 <tr><td>Average:</td><td>@!author.average!@</td></tr>
 </table>
+
+<h3>Monthly Usage Charts</h3>
+<ul>
+<!--(for i in author.years)-->
+<li><a href="ml-@!author.pagename!@-usage-@!i!@.png">@!i!@</a></li>
+<!--(end)-->
+</ul>
+
 </body>
 </html>

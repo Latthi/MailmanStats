@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 import mailbox, sys, re, pyratemp, time
 from os import path, walk, mkdir
 from optparse import OptionParser
@@ -68,9 +66,6 @@ class Authors:
             if "Re:" not in msg.subject or not msg.subject:
                 self.authors[msg.from_mail].started += 1
                 self.totalthreads += 1
-            else:
-                if msg.date - self.prevmsgtime < self.authors[msg.from_mail].shorttime: self.authors[msg.from_mail].shorttime = msg.date - self.prevmsgtime
-                if msg.date - self.prevmsgtime > self.authors[msg.from_mail].longtime: self.authors[msg.from_mail].longtime = msg.date - self.prevmsgtime
         except TypeError:
             pass
 
@@ -87,13 +82,7 @@ class Authors:
         self.plotEmailsPerAuthor()
         self.plotThreadsPerAuthor()
         self.plotMonthlyUsage()
-
-    def parseDates(self):
-        for a in self.authors:  
-            pass    # Throws ValueError: timestamp out of range for platform time_t Probably needs another converter
-        #self.authors[a].shorttime = time.strftime('%d %b %Y %H:%M:%S', time.gmtime(self.authors[a].shorttime))
-            #self.authors[a].longtime = time.strftime('%d %b %Y %H:%M:%S', time.gmtime(self.authors[a].longtime)) 
-
+    
     def sortAuthors(self):
         self.sorted_authors_emails = sorted(self.authors, key=lambda x:self.authors[x].posts, reverse=True)
         self.sorted_authors_threads = sorted(self.authors, key=lambda x:self.authors[x].started, reverse=True)
@@ -157,8 +146,6 @@ class Author:
         self.name = self.getName(self.mail)
         self.pagename = self.getPagename(self.mail)
         self.monthdic = {}
-        self.shorttime = sys.maxint
-        self.longtime = 0
 
     def getPagename(self, mail):
         mail = mail.replace('@', 'at')
@@ -239,3 +226,4 @@ if __name__ == "__main__":
 
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
+

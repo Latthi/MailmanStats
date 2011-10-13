@@ -29,7 +29,7 @@ h3
 <tr><td>Threads started:</td><td>@!author.started!@</td></tr>
 <tr><td>First message:</td><td>@!author.firstmsgdatestr!@</td></tr>
 <tr><td>Last message:</td><td>@!author.lastmsgdatestr!@</td></tr>
-<tr><td>Average:</td><td>@!author.average!@</td></tr>
+<tr><td>Average mails sent per day:</td><td>@!author.average!@</td><td></tr>
 </table>
 </body>
 </html>

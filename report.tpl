@@ -34,7 +34,7 @@ h3
 <div style="clear: both"></div>
 </div>
 </br>
-<h3>Yearly Usage Charts</h3>
+<h3>Monthly Usage Charts</h3>
 <ul>
 <!--(for i in yr)-->
 <li><a href="ml-files/ml-usage-@!i!@.png">@!i!@</a></li>

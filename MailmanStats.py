@@ -187,7 +187,7 @@ def plotBarGraph(data, outputfile, xlabel, ylabel):
     yaxis = axis.Y(label="/b/15"+ylabel, format="%d")
     fs = fill_style.Plain(bgcolor=color.lightblue)
     ar = area.T(size = (12*len(data)+50,400), x_coord = category_coord.T(cropped, 0), x_axis = xaxis, y_axis = yaxis, y_range = (0,None), legend = None)
-    ar.add_plot(bar_plot.T(data = cropped, fill_style = fs, data_label_format="%d", data_label_offset=(2,5)))
+    ar.add_plot(bar_plot.T(data = cropped, fill_style = fs, data_label_format="/a75{}%d", data_label_offset=(3,10)))
     ar.draw()
 
 def getMlName(mboxpath):

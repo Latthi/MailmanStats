@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import mailbox, sys, re, pyratemp, time
 from os import path, walk, mkdir
 from optparse import OptionParser

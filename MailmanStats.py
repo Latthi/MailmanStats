@@ -163,7 +163,7 @@ class Authors:
 # Represents the author of the post probably a subscriber of the list
 class Author:
     def __init__(self, mail, date):
-        if options.masked == True: self.mail = self.maskMail(mail)
+        if options.masked: self.mail = self.maskMail(mail)
         else: self.mail = mail
         self.posts = 1
         self.started = 0
@@ -219,7 +219,7 @@ class Message:
 if __name__ == "__main__":
     parser = OptionParser(usage="usage: %prog [options] <mbox file>")
     parser.add_option("-o", "--output", default="./", dest="output", help="Use this option to change the output directory. Default: Current working directory.")
-    parser.add_option("-m", "--masked", default=True, dest="masked", help="Use this option for obscure e-mails. Default: True")
+    parser.add_option("-m", "--masked", default=True, dest="masked", action="store_false", help="Use this option for obscure e-mails. Default: True")
     (options, args) = parser.parse_args()
 
     # Arguments validation

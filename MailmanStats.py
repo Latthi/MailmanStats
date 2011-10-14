@@ -156,7 +156,8 @@ class Authors:
 # Represents the author of the post probably a subscriber of the list
 class Author:
     def __init__(self, mail, date):
-        self.mail = mail
+        if options.masked == True: self.mail = self.maskMail(mail)
+        else: self.mail = mail
         self.posts = 1
         self.started = 0
         self.lastmsgdate = date
@@ -168,6 +169,25 @@ class Author:
         self.monthdic = {}
         self.years = []
         self.average = 0
+
+    def maskMail(self, mail):
+        at = mail.find('@')
+        name = mail[:at]
+        counter = 0
+        cut = 0
+        for i in name:
+            counter += 1
+            if counter%2 == 0: cut += 1
+        for i in range(cut, 1, -1): 
+            length = len(name) - 1
+            name = name[:length]
+        atm = at + 2
+        middle = mail[at:atm]
+        li = mail.rsplit('.', 1)
+        mail = '['.join(li)
+        dot = mail.find('[') - 1
+        mail = name + '..' + middle + '..' + mail[dot:]
+        return mail.replace('[', '.')
 
     def getPagename(self, mail):
         mail = mail.replace('@', 'at')
@@ -204,6 +224,7 @@ if __name__ == "__main__":
     parser = OptionParser(usage="usage: %prog [options] <mbox file>")
     parser.add_option("-g", "--graph", default=False, dest="graph", action="store_true", help="Add graphs to the report")
     parser.add_option("-o", "--output", default="./", dest="output", help="Use this option to change the output directory. Default: Current working directory.")
+    parser.add_option("-m", "--masked", default=True, dest="masked", help="Use this option for obscure e-mails. Default: True")
     (options, args) = parser.parse_args()
 
     # Arguments validation

@@ -109,7 +109,8 @@ class Authors:
 
     def calcAverage(self):
         for a in self.authors:
-            self.authors[a].average = str(round(self.authors[a].posts / int((time.time() - self.authors[a].firstmsgdate) / 86400), 3))
+            try: self.authors[a].average = str(round(self.authors[a].posts / int((time.time() - self.authors[a].firstmsgdate) / 86400), 3))
+            except ZeroDivisionError: pass
 
     def calcStats(self):
         self.sortAuthors()

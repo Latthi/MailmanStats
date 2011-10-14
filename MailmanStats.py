@@ -47,7 +47,6 @@ def monthlySort(data):
     firstyear = int(min(data.keys())[:4])
     lastyear = int(max(data.keys())[:4])
     firstmonth = int(min(data.keys())[-2:])
-    peryear = []
     r = ""
     y = firstyear
     m = firstmonth
@@ -63,11 +62,8 @@ def monthlySort(data):
             data[r] = 0
 
     for year in range(firstyear, lastyear+1):
-        for yearmonth in data.keys():
-            if int(yearmonth[:4]) == year:
-                peryear.append([months[int(yearmonth[-2:])-1], data[yearmonth]])
+        peryear = [[months[int(yearmonth[-2:])-1], data[yearmonth]] for yearmonth in data.keys() if int(yearmonth[:4]) == year]
         years[year] = sorted(peryear, key=lambda x: months.index(x[0]))
-        peryear = []
     return (years, firstyear, lastyear+1)
 
 
@@ -201,7 +197,6 @@ class Message:
 
 if __name__ == "__main__":
     parser = OptionParser(usage="usage: %prog [options] <mbox file>")
-    parser.add_option("-g", "--graph", default=False, dest="graph", action="store_true", help="Add graphs to the report")
     parser.add_option("-o", "--output", default="./", dest="output", help="Use this option to change the output directory. Default: Current working directory.")
     (options, args) = parser.parse_args()
 

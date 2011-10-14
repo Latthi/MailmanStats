@@ -8,7 +8,7 @@ from pychart import *
 
 ### GLOBAL ###
 # Constants
-MAILPROG = re.compile("[A-Za-z0-9._%+-]+[@][A-Za-z0-9.-]+[.][A-Za-z]{2,4}")
+MAILPROG = re.compile("([A-Za-z0-9._%+-]+)[@]([A-Za-z0-9.-]+)[.]([A-Za-z]{2,4})")
 DATEPROG = re.compile("[^0-9]*([0-9]+[ ]+[A-Za-z]{3}[ ]+[0-9]{4}[ ]+[0-9:]{8}).*")
 MONTHPROG = re.compile("[0-9]+[ ]([A-Za-z]{3})[ ]([0-9]{4}).*")
 
@@ -166,23 +166,12 @@ class Author:
         self.average = 0
 
     def maskMail(self, mail):
-        at = mail.find('@')
-        name = mail[:at]
-        counter = 0
-        cut = 0
-        for i in name:
-            counter += 1
-            if counter%2 == 0: cut += 1
-        for i in range(cut, 1, -1): 
-            length = len(name) - 1
-            name = name[:length]
-        atm = at + 2
-        middle = mail[at:atm]
-        li = mail.rsplit('.', 1)
-        mail = '['.join(li)
-        dot = mail.find('[') - 1
-        mail = name + '..' + middle + '..' + mail[dot:]
-        return mail.replace('[', '.')
+        r = MAILPROG.match(mail)
+        cut = int((len(r.group(1))-2) /2)
+        name = r.group(1)[:-cut]
+        middle = r.group(2)[0]+"..."+r.group(2)[-1]
+        mail = name +"...@"+  middle + "." +  r.group(3)
+        return mail
 
     def getPagename(self, mail):
         mail = mail.replace('@', 'at')

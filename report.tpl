@@ -22,7 +22,11 @@ h3 {
     font-size:80%;                                                                                                                                                              
     font-style:italic;                                                                                                                                                          
     text-align: center;                                                                                                                                                         
-}       
+}
+
+#note {
+    font-size:60%
+}
 </style>
 </head>
 <body>
@@ -46,6 +50,7 @@ h3 {
 <!--(end)-->
 </ul>
 <h3>User Statistics</h3>
+<div id="note">Click on the the column titles to sort the table</div>
 <table class="sortable">
 <tr><th>Name</th><th>Mails Sent</th><th>Threads Started</th><th>Last Message</th></tr>
 <!--(for i in sa)-->

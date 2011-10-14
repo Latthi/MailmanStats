@@ -219,7 +219,7 @@ class Message:
 if __name__ == "__main__":
     parser = OptionParser(usage="usage: %prog [options] <mbox file>")
     parser.add_option("-o", "--output", default="./", dest="output", help="Use this option to change the output directory. Default: Current working directory.")
-    parser.add_option("-m", "--masked", default=True, dest="masked", action="store_false", help="Use this option for obscure e-mails. Default: True")
+    parser.add_option("-u", "--unmask", default=True, dest="masked", action="store_false", help="Use this option to show email addresses.")
     (options, args) = parser.parse_args()
 
     # Arguments validation

@@ -147,7 +147,7 @@ class Authors:
     def plotYearlyUsage(self):
         tmp = [[a, self.yearmsg[a]] for a in self.yearmsg]
         tmp = sorted(tmp, key=lambda x: x[0])
-        plotBarGraph(tmp, outputdir+"/ml-files/ml-yearly.png", "Years", "Emails")
+        plotBarGraph(tmp, outputdir+"/ml-files/ml-yearlyusage.png", "Years", "Emails")
 
     def plotMonthlyUsage(self):
         peryear, fy, ly = monthlySort(self.totalmonth)
@@ -258,7 +258,7 @@ if __name__ == "__main__":
     #  Generate ml-report.html
     f = open(outputfile, 'w')
     t = pyratemp.Template(filename='report.tpl')
-    result = t(heading=mlname, totalmails=authors.totalmails, totalthreads=authors.totalthreads, mydic=authors.authors, sa=authors.sorted_authors_emails, yr=authors.years)
+    result = t(heading=mlname, totalmails=authors.totalmails, totalthreads=authors.totalthreads, mydic=authors.authors, sa=authors.sorted_authors_emails, yr=authors.years, ac=len(authors.authors))
     f.write(result)
     f.close()
 

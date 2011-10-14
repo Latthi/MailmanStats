@@ -25,7 +25,7 @@ h3 {
 }
 
 #note {
-    font-size:60%
+    font-size:75%
 }
 </style>
 </head>
@@ -33,13 +33,15 @@ h3 {
 <h1>'@!heading!@' Mailing List Stats</h1>
 <h3>General Statistics</h3>
 <table>
+<tr><th>Total Authors:</th><td>@!ac!@</td></tr>
 <tr><th>Total Mails:</th><td>@!totalmails!@</td></tr>
 <tr><th>Total Threads:</th><td>@!totalthreads!@</td></tr>
 </table>
 <h3>Charts</h3>
-<div style="padding: 1em; width: 520px;">
+<div style="padding: 1em;">
 <div style="width: 250px; float: left;"><a href="ml-files/ml-emailsperauthor.png"><img src="ml-files/ml-emailsperauthor.png" alt="Emails Per Author" height=150 width=250></br><center>Emails Per Author</center></a></div>
 <div style="width: 250px; float: left;"><a href="ml-files/ml-threadsperauthor.png"><img src="ml-files/ml-threadsperauthor.png" alt="Emails Per Author" height=150 width=250></br><center>Threads Per Author</center></a></div>
+<div style="width: 250px; float: left;"><a href="ml-files/ml-yearlyusage.png"><img src="ml-files/ml-yearlyusage.png" alt="Mailing List's Yearly Usage" height=150 width=250></br><center>Mailing List's Yearly Usage</center></a></div>
 <div style="clear: both"></div>
 </div>
 </br>
@@ -50,7 +52,7 @@ h3 {
 <!--(end)-->
 </ul>
 <h3>User Statistics</h3>
-<div id="note">Click on the the column titles to sort the table</div>
+<div id="note">Click on the the column titles to sort the table.</div><br>
 <table class="sortable">
 <tr><th>Name</th><th>Mails Sent</th><th>Threads Started</th><th>Last Message</th></tr>
 <!--(for i in sa)-->

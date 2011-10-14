@@ -77,6 +77,7 @@ class Authors:
         self.totalthreads = 0
         self.totalmonth = {}
         self.years = []
+        self.yearmsg = {}
 
     def parseMsg(self, msg):
         if (msg.from_mail not in self.authors):
@@ -95,6 +96,11 @@ class Authors:
                 self.totalthreads += 1
         except TypeError:
             pass
+        
+        if msg.month[:4] not in self.yearmsg:
+            self.yearmsg[msg.month[:4]] = 1
+        else:
+            self.yearmsg[msg.month[:4]] += 1
 
         if msg.month not in self.totalmonth: self.totalmonth[msg.month] = 1
         if msg.month not in self.authors[msg.from_mail].monthdic: self.authors[msg.from_mail].monthdic[msg.month] = 1
@@ -113,6 +119,7 @@ class Authors:
         self.plotEmailsPerAuthor()
         self.plotThreadsPerAuthor()
         self.plotMonthlyUsage()
+        self.plotYearlyUsage()
     
     def sortAuthors(self):
         self.sorted_authors_emails = sorted(self.authors, key=lambda x:self.authors[x].posts, reverse=True)
@@ -136,6 +143,11 @@ class Authors:
     def plotThreadsPerAuthor(self):
         tmp = [[a, self.authors[a].started] for a in self.sorted_authors_threads]
         plotBarGraph(tmp, outputdir+"/ml-files/ml-threadsperauthor.png", "Authors", "Threads")
+
+    def plotYearlyUsage(self):
+        tmp = [[a, self.yearmsg[a]] for a in self.yearmsg]
+        tmp = sorted(tmp, key=lambda x: x[0])
+        plotBarGraph(tmp, outputdir+"/ml-files/ml-yearly.png", "Years", "Emails")
 
     def plotMonthlyUsage(self):
         peryear, fy, ly = monthlySort(self.totalmonth)

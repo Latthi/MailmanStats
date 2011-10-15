@@ -1,0 +1,3 @@
+ - Filter (--filter -f) option which will parse a file with certain emails and it will show only those in the report.
+ - Cache like webalizer.
+ - Thumbnails creation.

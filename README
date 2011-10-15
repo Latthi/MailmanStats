@@ -13,8 +13,8 @@ Version:       Beta
 Description:   MailmanStats is a python script that generates an HTML report 
                for a Mailman based mailing list. It takes the mailbox path as
                an argument and presents useful information such as mails sent
-               per user, threads created per user, mails sent per monthi, activity
-               per user and more. It also create statistics and submits them 
+               per user, threads created per user, mails sent per month, activity
+               per user and more. It also creates statistics and submits them 
                using graphs.
 
 Credits:       Roland Koebler (rk at simple-is-better dot org) for pyratemp

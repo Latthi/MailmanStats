@@ -3,7 +3,7 @@
 from __future__ import division
 import mailbox, sys, re, pyratemp, time
 from os import path, walk, mkdir
-from optparse import OptionParser
+import argparse
 from pychart import *
 
 ### GLOBAL ###
@@ -13,19 +13,23 @@ DATEPROG = re.compile("[^0-9]*([0-9]+[ ]+[A-Za-z]{3}[ ]+[0-9]{4}[ ]+[0-9:]{8}).*
 MONTHPROG = re.compile("[0-9]+[ ]([A-Za-z]{3})[ ]([0-9]{4}).*")
 
 # Functions
-def plotBarGraph(data, outputfile, xlabel, ylabel, thumb = False):
+def plotBarGraph(data, outputfile, xlabel, ylabel, thumb = False, limitable = False):
     cropped = []
     theme.output_format = "png"
     theme.output_file = outputfile
     theme.scale_factor = 1.5
     theme.use_color = True
     theme.reinitialize()
+
+    if len(data) > limit and limitable:
+        data = data[:limit]
+
     for d in data:
         if len(d[0]) > 21:
             cropped.append([d[0][:21]+"...", d[1]])
         else:
             cropped.append([d[0], d[1]])
-  
+
     fs = fill_style.Plain(bgcolor=color.lightblue)
     if not thumb:
         yaxis = axis.Y(label="/b/15"+ylabel, format = "%d")
@@ -39,7 +43,7 @@ def plotBarGraph(data, outputfile, xlabel, ylabel, thumb = False):
 
 def getMlName(mboxpath):
     dot = path.basename(mboxpath).find(".")
-    return path.basename(args[0])[:dot]
+    return path.basename(mboxpath)[:dot]
 
 
 def dictSub(text, dictionary):
@@ -144,13 +148,13 @@ class Authors:
 
     def plotEmailsPerAuthor(self):
         tmp = [[a, self.authors[a].posts] for a in self.sorted_authors_emails]
-        plotBarGraph(tmp, outputdir+"/ml-files/ml-emailsperauthor.png", "Authors", "Emails")
-        plotBarGraph(tmp, outputdir+"/ml-files/ml-emailsperauthor-thumb.png", "Authors", "Emails", thumb = True)
+        plotBarGraph(tmp, outputdir+"/ml-files/ml-emailsperauthor.png", "Authors", "Emails", limitable = True)
+        plotBarGraph(tmp, outputdir+"/ml-files/ml-emailsperauthor-thumb.png", "Authors", "Emails", thumb = True, limitable = True)
 
     def plotThreadsPerAuthor(self):
         tmp = [[a, self.authors[a].started] for a in self.sorted_authors_threads]
-        plotBarGraph(tmp, outputdir+"/ml-files/ml-threadsperauthor.png", "Authors", "Threads")
-        plotBarGraph(tmp, outputdir+"/ml-files/ml-threadsperauthor-thumb.png", "Authors", "Threads", thumb = True)
+        plotBarGraph(tmp, outputdir+"/ml-files/ml-threadsperauthor.png", "Authors", "Threads", limitable = True)
+        plotBarGraph(tmp, outputdir+"/ml-files/ml-threadsperauthor-thumb.png", "Authors", "Threads", thumb = True, limitable = True)
 
     def plotYearlyUsage(self):
         tmp = [[a, self.yearmsg[a]] for a in self.yearmsg]
@@ -226,25 +230,23 @@ class Message:
 
 
 if __name__ == "__main__":
-    parser = OptionParser(usage="usage: %prog [options] <mbox file>")
-    parser.add_option("-o", "--output", default="./", dest="output", help="Use this option to change the output directory. Default: Current working directory.")
-    parser.add_option("-u", "--unmask", default=True, dest="masked", action="store_false", help="Use this option to show email addresses.")
-    (options, args) = parser.parse_args()
+    parser = argparse.ArgumentParser(description="MailmanStats is a python script that generates an HTML report for a Mailman based mailing list. It takes the mailbox path as an argument and presents useful information such as mails sent per user, threads created per user, mails sent per month, activity per user and more. It also creates statistics and submits them using graphs.") # FIXME add epilog
+    parser.add_argument("-o", "--output", default="./", dest="output", help="Use this option to change the output directory. Default: Current working directory.")
+    parser.add_argument("-l", "--limit", type=int, default=100, dest="limit", help="Choose the number of authors you want to be shown in the charts. Default top 100 authors.")
+    parser.add_argument("-u", "--unmask", default=True, dest="masked", action="store_false", help="Use this option to show email addresses.")
+    parser.add_argument("mbox", help="Mbox File")
+    options = parser.parse_args()
 
-    # Arguments validation
-    if len(args) < 1:
-        parser.print_help()
-        sys.exit()
-
-    if not path.isfile(args[0]):
+    if not path.isfile(options.mbox):
         print "This is not a file!"
         sys.exit()
 
-    mbox = mailbox.mbox(args[0])
+    mbox = mailbox.mbox(options.mbox)
     outputfile = "ml-report.html"
+    limit = options.limit
     outputdir = options.output
     authors = Authors()
-    mlname = getMlName(args[0])
+    mlname = getMlName(options.mbox)
 
 
     # Create Directory for extra files

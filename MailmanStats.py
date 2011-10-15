@@ -8,9 +8,15 @@ from pychart import *
 
 ### GLOBAL ###
 # Constants
+MONTH = "(?P<month>Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)"
+YEAR = "(?P<year>[0-9]{2,4})"
+DAY = "(Mon|Tue|Wed|Thu|Fri|Sat|Sun)"
+TIME = "(?P<time>[0-9:]{8})"
+DATE = "(?P<date>[0-9]{1,2})"
 MAILPROG = re.compile("([A-Za-z0-9._%+-]+)[@]([A-Za-z0-9.-]+)[.]([A-Za-z]{2,4})")
-DATEPROG = re.compile("[^0-9]*([0-9]+[ ]+[A-Za-z]{3}[ ]+[0-9]{4}[ ]+[0-9:]{8}).*")
-MONTHPROG = re.compile("[0-9]+[ ]([A-Za-z]{3})[ ]([0-9]{4}).*")
+DATEREGEX = (DAY+"[,][ ]"+DATE+"[ ]"+MONTH+"[ ]"+YEAR+"[ ]"+TIME, DAY+"[ ]"+MONTH+"[ ]"+DATE+"[ ]"+TIME+"[ ]"+YEAR, DATE+"[ ]"+MONTH+"[ ]"+YEAR+"[ ]"+TIME,
+DATEPROG = [re.compile(d) for d in DATEREGEX]
+
 
 # Functions
 def plotBarGraph(data, outputfile, xlabel, ylabel, thumb = False, limitable = False):
@@ -52,7 +58,7 @@ def dictSub(text, dictionary):
 
 
 def monthlySort(data):
-    months = ["January", "February", "March", "April", "May", "June", "Julu", "August", "September", "Octomber", "November", "December"]
+    months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "Octomber", "November", "December"]
     firstyear = int(min(data.keys())[:4])
     lastyear = int(max(data.keys())[:4])
     firstmonth = int(min(data.keys())[-2:])
@@ -191,7 +197,7 @@ class Author:
         self.average = 0
 
     def maskMail(self, mail):
-        r = MAILPROG.match(mail)
+        r = MAILPROG.match(mail) #FIXME
         cut = int((len(r.group(1))-2) /2)
         name = r.group(1)[:-cut]
         middle = r.group(2)[0]+"..."+r.group(2)[-1]
@@ -212,28 +218,41 @@ class Author:
 class Message:
     def __init__(self, message):
         self.subject = message['subject']
-        r= MAILPROG.search(message['from'])
+        r = MAILPROG.search(message['from'])
         if not r:
-            raise TypeError
+            raise TypeError #FIXME
         self.from_mail = r.group(0)
-        r = DATEPROG.match(message['date'])
-        if r:
-            t = time.strptime(r.group(1), '%d %b %Y %H:%M:%S')
-            self.date = time.mktime(t)
-            self.month = self.getMonth(r.group(1))
+        for d in DATEPROG:
+            r = d.search(message['date']) #FIXME
+            print message['date']
+            if r:
+                print "mpika"
+                if len(r.group('year')) == 4:
+                    t = time.strptime(r.group('date')+" "+r.group('month')+" "+r.group('year')+" "+r.group('time'), '%d %b %Y %H:%M:%S')
+                else:
+                    t = time.strptime(r.group('date')+" "+r.group('month')+" "+r.group('year')+" "+r.group('time'), '%d %b %y %H:%M:%S')
+                print time.mktime(t)
+                self.date = time.mktime(t)
+                self.month = r.group('month')
+                break
 
     def getMonth(self, date):
-        r = MONTHPROG.match(date)
+        r = MONTHPROG.search(date) #FIXME
         months = {"Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6, "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12}
         month = dictSub(r.group(1), months)
         return "%s%02d" % (r.group(2), int(month))
 
+
+    def __str__(self):
+        print self.subject+" "+self.from_mail+" "+self.date
+        
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="MailmanStats is a python script that generates an HTML report for a Mailman based mailing list. It takes the mailbox path as an argument and presents useful information such as mails sent per user, threads created per user, mails sent per month, activity per user and more. It also creates statistics and submits them using graphs.") # FIXME add epilog
     parser.add_argument("-o", "--output", default="./", dest="output", help="Use this option to change the output directory. Default: Current working directory.")
     parser.add_argument("-l", "--limit", type=int, default=100, dest="limit", help="Choose the number of authors you want to be shown in the charts. Default top 100 authors.")
     parser.add_argument("-u", "--unmask", default=True, dest="masked", action="store_false", help="Use this option to show email addresses.")
+    parser.add_argument("-d", "--debug", default=False, dest="debug", action="store_true", help="Use this option if you want to enable debug output.")
     parser.add_argument("mbox", help="Mbox File")
     options = parser.parse_args()
 
@@ -247,20 +266,23 @@ if __name__ == "__main__":
     outputdir = options.output
     authors = Authors()
     mlname = getMlName(options.mbox)
-
+    dbg = options.debug
 
     # Create Directory for extra files
     try:
         mkdir(outputdir+"/ml-files/")
-    except OSError:
-        pass
+    except OSError, e:
+        if dbg:
+            print e # FIXME
 
     # Parse all messages in mbox file
     for message in mbox:
         try:
             msg = Message(message)
             authors.parseMsg(msg)
-        except TypeError:
+        except TypeError, e:
+            if dbg:
+                print e #FIXME
             continue
 
     authors.calcStats()

@@ -10,12 +10,20 @@ table.sortable thead {
     cursor: default;
 }
 
+a:link, a:visited, a:active {color: blue;}
+a:hover {color: #3399FF;}
+
 th {
     text-align: left;
 }
 
 h3 {
     background-color: lightblue;
+}
+
+img.thumb
+{
+	border:1px solid lightblue;
 }
 
 #footer {                                                                                                                                                                                   
@@ -39,9 +47,9 @@ h3 {
 </table>
 <h3>Charts</h3>
 <div style="padding: 1em;">
-<div style="width: 250px; float: left;"><a href="ml-files/ml-emailsperauthor.png"><img src="ml-files/ml-emailsperauthor.png" alt="Emails Per Author" height=150 width=250></br><center>Emails Per Author</center></a></div>
-<div style="width: 250px; float: left;"><a href="ml-files/ml-threadsperauthor.png"><img src="ml-files/ml-threadsperauthor.png" alt="Emails Per Author" height=150 width=250></br><center>Threads Per Author</center></a></div>
-<div style="width: 250px; float: left;"><a href="ml-files/ml-yearlyusage.png"><img src="ml-files/ml-yearlyusage.png" alt="Mailing List's Yearly Usage" height=150 width=250></br><center>Mailing List's Yearly Usage</center></a></div>
+<div style="width: 250px; float: left; padding-left: 10px; padding-right: 10px;"><a href="ml-files/ml-emailsperauthor.png"><img class="thumb" src="ml-files/ml-emailsperauthor-thumb.png" alt="Emails Per Author" height=150 width=250 border=1px></br><center>Emails Per Author</center></a></div>
+<div style="width: 250px; float: left; padding-right: 10px;"><a href="ml-files/ml-threadsperauthor.png"><img class="thumb" src="ml-files/ml-threadsperauthor-thumb.png" alt="Emails Per Author" height=150 width=250 border=1px></br><center>Threads Per Author</center></a></div>
+<div style="width: 250px; float: left;"><a href="ml-files/ml-yearlyusage.png"><img class="thumb" src="ml-files/ml-yearlyusage-thumb.png" alt="Mailing List's Yearly Usage" height=150 width=250 border=1px></br><center>Mailing List's Yearly Usage</center></a></div>
 <div style="clear: both"></div>
 </div>
 </br>

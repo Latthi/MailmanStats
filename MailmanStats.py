@@ -13,7 +13,7 @@ DATEPROG = re.compile("[^0-9]*([0-9]+[ ]+[A-Za-z]{3}[ ]+[0-9]{4}[ ]+[0-9:]{8}).*
 MONTHPROG = re.compile("[0-9]+[ ]([A-Za-z]{3})[ ]([0-9]{4}).*")
 
 # Functions
-def plotBarGraph(data, outputfile, xlabel, ylabel):
+def plotBarGraph(data, outputfile, xlabel, ylabel, thumb = False):
     cropped = []
     theme.output_format = "png"
     theme.output_file = outputfile
@@ -25,11 +25,16 @@ def plotBarGraph(data, outputfile, xlabel, ylabel):
             cropped.append([d[0][:21]+"...", d[1]])
         else:
             cropped.append([d[0], d[1]])
-    xaxis = axis.X(format=lambda x: "/a80/H"+x, label="/b/15"+xlabel, tic_label_offset=(-3,0))
-    yaxis = axis.Y(label="/b/15"+ylabel, format="%d")
+  
     fs = fill_style.Plain(bgcolor=color.lightblue)
-    ar = area.T(size = (12*len(data)+50,400), x_coord = category_coord.T(cropped, 0), x_axis = xaxis, y_axis = yaxis, y_range = (0,None), legend = None)
-    ar.add_plot(bar_plot.T(data = cropped, fill_style = fs, data_label_format="/a75{}%d", data_label_offset=(3,10)))
+    if not thumb:
+        yaxis = axis.Y(label="/b/15"+ylabel, format = "%d")
+        xaxis = axis.X(format=lambda x: "/a80/H"+x, label = "/b/15"+xlabel, tic_label_offset = (-3,0))
+        ar = area.T(size = (12*len(data)+50,400), x_coord = category_coord.T(cropped, 0), x_axis = xaxis, y_axis = yaxis, y_range = (0,None), legend = None)
+        ar.add_plot(bar_plot.T(data = cropped, fill_style = fs, data_label_format="/a75{}%d", data_label_offset=(3,10)))
+    else:
+        ar = area.T(size = (250,150), x_coord = category_coord.T(cropped, 0), y_range = (0,None), legend = None)
+        ar.add_plot(bar_plot.T(data = cropped, fill_style = fs))
     ar.draw()
 
 def getMlName(mboxpath):
@@ -114,6 +119,7 @@ class Authors:
             except ZeroDivisionError: pass
 
     def calcStats(self):
+        self.calcAverage()
         self.sortAuthors()
         self.createUserPages()
         self.plotEmailsPerAuthor()
@@ -139,15 +145,18 @@ class Authors:
     def plotEmailsPerAuthor(self):
         tmp = [[a, self.authors[a].posts] for a in self.sorted_authors_emails]
         plotBarGraph(tmp, outputdir+"/ml-files/ml-emailsperauthor.png", "Authors", "Emails")
+        plotBarGraph(tmp, outputdir+"/ml-files/ml-emailsperauthor-thumb.png", "Authors", "Emails", thumb = True)
 
     def plotThreadsPerAuthor(self):
         tmp = [[a, self.authors[a].started] for a in self.sorted_authors_threads]
         plotBarGraph(tmp, outputdir+"/ml-files/ml-threadsperauthor.png", "Authors", "Threads")
+        plotBarGraph(tmp, outputdir+"/ml-files/ml-threadsperauthor-thumb.png", "Authors", "Threads", thumb = True)
 
     def plotYearlyUsage(self):
         tmp = [[a, self.yearmsg[a]] for a in self.yearmsg]
         tmp = sorted(tmp, key=lambda x: x[0])
         plotBarGraph(tmp, outputdir+"/ml-files/ml-yearlyusage.png", "Years", "Emails")
+        plotBarGraph(tmp, outputdir+"/ml-files/ml-yearlyusage-thumb.png", "Years", "Emails", thumb = True)
 
     def plotMonthlyUsage(self):
         peryear, fy, ly = monthlySort(self.totalmonth)
@@ -252,7 +261,6 @@ if __name__ == "__main__":
         except TypeError:
             continue
 
-    authors.calcAverage()
     authors.calcStats()
 
     #  Generate ml-report.html

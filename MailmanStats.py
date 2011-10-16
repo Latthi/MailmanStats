@@ -86,6 +86,20 @@ def monthlySort(data):
         years[year] = sorted(peryear, key=lambda x: months.index(x[0]))
     return (years, firstyear, lastyear+1)
 
+
+def parseFile(f):
+    filterlist = []
+    while True:
+        mail = f.readline()
+        if len(mail) == 0: break
+        r = MAILPROG.match(mail)
+        if r: 
+            mail = mail[:-1]
+            filterlist.append(mail)
+    f.close()
+    return filterlist
+
+
 # Classes
 class MailmanStatsException(Exception):
    def __init__(self, text):
@@ -124,7 +138,6 @@ class UserPageGen(Thread):
 class Authors:
     def __init__(self):
         self.authors = {}
-        self.filterlist=[]
         self.sorted_authors_emails = []
         self.sorted_authors_threads = []
         self.totalmails = 0                                                                                                                                                                                
@@ -133,16 +146,7 @@ class Authors:
         self.years = []
         self.yearmsg = {}
 
-    def parseFile(self, file):
-        f = open('parse.txt')
-        while True:
-            mail = f.readline()
-            if len(mail) == 0: break
-            r = MAILPROG.match(mail)
-            if r: 
-                mail = mail[:-1]
-                self.filterlist.append(mail)
-        f.close()
+
 
     def parseMsg(self, msg):
         if (msg.from_mail not in self.authors):
@@ -322,7 +326,7 @@ if __name__ == "__main__":
         parser.add_argument("-l", "--limit", type=int, default=100, dest="limit", help="Choose the number of authors you want to be shown in the charts. Default top 100 authors.")
         parser.add_argument("-u", "--unmask", default=True, dest="masked", action="store_false", help="Use this option to show email addresses.")
         parser.add_argument("-d", "--debug", default=False, dest="debug", action="store_true", help="Use this option if you want to enable debug output.")
-        parser.add_argument("-f", "--filter", default=False, dest="filter", action="store_true", help="Use this option to filter only the e-mails from parse.txt")
+        parser.add_argument("-f", "--filter", type=argparse.FileType(), dest="filter", help="Use this option to filter only the e-mails from parse.txt")
         parser.add_argument("mbox", help="Mbox File")
         options = parser.parse_args()
 
@@ -346,15 +350,14 @@ if __name__ == "__main__":
                 print "Couldn't create directory ml-files"
 
         if options.filter:
-            authors.parseFile("parse.txt")
+            filterlist = parseFile(options.filter)
 
         # Parse all messages in mbox file
         for message in mbox:
             msg = Message(message)
-            if msg.from_mail and msg.date and msg.subject and msg.month and (options.filter == False or (options.filter and msg.from_mail in authors.filterlist)):
+            if msg.from_mail and msg.date and msg.subject and msg.month and (options.filter == False or (options.filter and msg.from_mail in filterlist)):
                 authors.parseMsg(msg)
 
-        start = time.time()
         # Calcuate stats and generate charts
         authors.calcStats()
 

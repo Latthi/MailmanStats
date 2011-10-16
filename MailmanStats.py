@@ -235,17 +235,18 @@ class Author:
 
 class Message:
     def __init__(self, message):
+        self.from_mail = None
+        self.subject = None
+        self.date = None
         self.subject = message['subject']
         try:
             r = MAILPROG.search(message['from'])
         except TypeError:
             print "Parsing error: From email '"+str(message['from'])+"'"
-            self.from_mail = None
             return
         if not r:
             if dbg:
                 print "Parsing error: From email '"+message['from']+"'"
-                self.from_mail = None
                 return
         else:
             self.from_mail = r.group(0)
@@ -264,7 +265,6 @@ class Message:
                         print "Parsed date: '"+r.group('date')+"'"
                         print "Parsed month: '"+r.group('month')+"'"
                         print "Parsed time: '"+r.group('time')+"'"
-                    self.date = None
                     return
                 self.date = time.mktime(t)
                 self.month = self.getMonth(t.tm_year, r.group('month'))
@@ -272,7 +272,6 @@ class Message:
         if not r:
             if dbg:
                 print "Parsing error: Message Date '"+message['date']+"'"
-            self.date = None
 
     def getMonth(self, year, month):
         months = {"Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6, "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12}

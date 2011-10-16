@@ -1,10 +1,21 @@
+#
+# Copyright (C) 2000-2005 by Yasushi Saito (yasushi.saito@gmail.com)
+# 
+# Jockey is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any
+# later version.
+#
+# Jockey is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
 import sys
 import math
 import types
 import traceback
-
-AnyType = 9998
-NumType = 9999
+from types import *
 
 def inch_to_point(inch):
     return inch * 72.0
@@ -12,13 +23,17 @@ def point_to_inch(pt):
     return float(pt) / 72.0
 
 def rotate(x, y, degree):
+    """Rotate a coordinate around point (0,0).
+    - x and y specify the coordinate.
+    - degree is a number from 0 to 360.
+    Returns a new coordinate.
+    """
     radian = float(degree) * 2 * math.pi / 360.0
     newx = math.cos(radian) * x - math.sin(radian) * y
     newy = math.sin(radian) * x + math.cos(radian) * y
     return (newx, newy)
 
 debug_level = 1
-error_happened = 0
 
 def warn(*strs):
     for s in strs:
@@ -33,17 +48,24 @@ def info(*strs):
         sys.stderr.write(str(s))
     sys.stderr.write("\n")
 
-def check_data_integrity(self, data, cols):
-    col = max(cols)
+def get_sample_val(l, col):
+    if len(l) <= col:
+        return None
+    return l[col]
+
+def get_data_list(data, col):
+    # data = [ elem[col] for elem in data if elem[col] != None ]
+    r = []
     for item in data:
-        if len(item) <= col:
-            raise IndexError, "No %dth column in data %s given to %s" \
-                  % (col, item, str(self))
-        
+        val = get_sample_val(item, col)
+        if val != None:
+            r.append(val)
+    return r        
+    
 def get_data_range(data, col):
-    data = map(lambda pair, col=col: pair[col], data)
+    data = get_data_list(data, col)
     for item in data:
-	if type(item) not in (types.IntType, types.FloatType):
+        if type(item) not in (types.IntType, types.LongType, types.FloatType):
             raise TypeError, "Non-number passed to data: %s" % (data)
     return (min(data), max(data))
 
@@ -53,7 +75,7 @@ def round_down(val, bound):
 def round_up(val, bound):
     return (int((val-1)/float(bound))+1) * bound
 
-
+    
 #
 # Attribute type checking stuff
 #
@@ -62,96 +84,43 @@ def new_list():
     return []
 
 def union_dict(dict1, dict2):
-    dict = {}
-    for attr, val in dict1.items():
-        dict[attr] = val
-    for attr, val in dict2.items():
-        dict[attr] = val
+    dict = dict1.copy()
+    dict.update(dict2)
     return dict
 
 def TextVAlignType(val):
-    if val == 'T' or val == 'B' or val == 'M' or val == None:
-        return ""
+    if val in ('T', 'B', 'M', None):
+        return None
     return "Text vertical alignment must be one of T(op), B(ottom), or M(iddle).\n"
 
 def TextAlignType(val):
-    if val == 'C' or val == 'R' or val == 'L' or val == None:
-        return ""
+    if val in ('C', 'R', 'L', None):
+        return None
     return "Text horizontal alignment must be one of C(enter), R(ight), or L(eft)."
 
-def FormatType(val):
-    if type(val) == types.StringType:
-        return ""
-    if type(val) == types.FunctionType:
-        return ""
-    return "Format must be a string or a function"
-
 def apply_format(format, val, defaultidx):
-    if type(format) == types.StringType:
+    if format == None:
+        return None
+    elif type(format) == StringType:
         return format % val[defaultidx]
     else:
         return apply(format, val)
 
-def NumType(val):
-   if type(val) == types.IntType or type(val) == types.FloatType:
-       return ""
-   else:
-       return "Expecting a number, found \"" + str(val) + "\""
-
-def ShadowType(val):
-    if type(val) != types.TupleType and type(val) != types.ListType:
-	return "Expecting tuple or list."
-    if len(val) != 3:
-	return "Expecting (xoff, yoff, fill)."
-    return ""
-    
-def CoordType(val):
-    if type(val) != types.TupleType and type(val) != types.ListType:
-        return (" not a valid coordinate.")
-    if len(val) != 2:
-        return "Coordinate must be a pair of numbers.\n"
-    error = NumType(val[0])
-    if val[0] != None and error != "":
-        return error
-    error = NumType(val[1])
-    if val[1] != None and error != "":
-        return error
-    return ""
-
-def IntervalType(val):
-    if NumType(val) == "":
-	return ""
-    if type(val) == types.FunctionType:
-	return ""
-    return "Expecting a number or a function"
-
-def CoordOrNoneType(val):
-    if type(val) != types.TupleType and type(val) != types.ListType:
-        return "Expecting a tuple or a list."
-    if len(val) != 2:
-        return "Coordinate must be a pair of numbers.\n"
-    error = NumType(val[0])
-    if val[0] != None and error != "":
-        return error
-    error = NumType(val[1])
-    if val[1] != None and error != "":
-        return error
-    return ""
     
 data_desc = "Specifies the data points. <<chart_data>>"
 label_desc = "The label to be displayed in the legend. <<legend>>, <<font>>"
-xcol_desc = """The column, within "data", from which the X values of sample points are extracted. <<chart_data>>"""
-ycol_desc = """The column, within "data", from which the Y values of sample points are extracted. <<chart_data>>"""
-tick_mark_desc = "Tick marks to be displayed at each sample point."
+xcol_desc = """The column, within attribute "data", from which the X values of sample points are extracted. <<chart_data>>"""
+ycol_desc = """The column, within attribute "data", from which the Y values of sample points are extracted. <<chart_data>>"""
+tick_mark_desc = "Tick marks to be displayed at each sample point. <<tick_mark>>"
 line_desc="The style of the line. "
 
 def interval_desc(w):
-    return "When the value is a number, it specifies the interval with which %s are drawn. Otherwise, the value must be a function. It must take no argument and return the list of numbers, which specifies the X or Y points where %s are drawn." % (w,w)
+    return "When the value is a number, it specifies the interval at which %s are drawn. Otherwise, the value must be a function that takes two arguments, min and max X (or Y) values. It must return a list of numbers that specify the X or Y points at which %s are drawn." % (w,w)
 
 shadow_desc = """The value is either None or a tuple. When non-None,
 a drop-shadow is drawn beneath the object. X-off, and y-off specifies the
 offset of the shadow relative to the object, and fill specifies the
-style of the shadow (@pxref{fill_style})."""
+style of the shadow (@pxref{module-fill-style})."""
 
 string_desc = """The appearance of the string produced here can be
 controlled using escape sequences. <<font>>"""

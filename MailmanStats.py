@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import division
-import mailbox, sys, re, pyratemp, time
+import mailbox, sys, re, pyratemp, time, Queue, pprint
+from threading import Thread
 from os import path, walk, mkdir
 import argparse
 from pychart import *
@@ -17,18 +18,18 @@ try:
     MAILPROG = re.compile("([A-Za-z0-9._%+-]+)[@]([A-Za-z0-9.-]+)[.]([A-Za-z]{2,4})")
     DATEREGEX = (DAY+"[,][ ]"+DATE+"[ ]"+MONTH+"[ ]"+YEAR+"[ ]"+TIME, DAY+"[ ]"+MONTH+"[ ]"+DATE+"[ ]"+TIME+"[ ]"+YEAR, DATE+"[ ]"+MONTH+"[ ]"+YEAR+"[ ]"+TIME, DAY+"[ ]"+MONTH+"[ ]+"+DATE+"[ ]"+TIME+" "+YEAR)
     DATEPROG = [re.compile(d) for d in DATEREGEX]
+    theme.scale_factor = 1.5
+    theme.use_color = True
+    theme.reinitialize()
+
+
 except KeyboardInterrupt:
     pass
 
 # Functions
 def plotBarGraph(data, outputfile, xlabel, ylabel, thumb = False, limitable = False):
     cropped = []
-    theme.output_format = "png"
-    theme.output_file = outputfile
-    theme.scale_factor = 1.5
-    theme.use_color = True
-    theme.reinitialize()
-
+    can = canvas.init(outputfile)
     if len(data) > limit and limitable:
         data = data[:limit]
 
@@ -48,12 +49,13 @@ def plotBarGraph(data, outputfile, xlabel, ylabel, thumb = False, limitable = Fa
         ar = area.T(size = (250,150), x_coord = category_coord.T(cropped, 0), y_range = (0,None), legend = None)
         ar.add_plot(bar_plot.T(data = cropped, fill_style = fs))
     try:
-        ar.draw()
+        ar.draw(can)
     except ValueError:
         if dbg:
             print "Input Data: "+str(data)
             print "Cropped Data: "+str(cropped)
         raise MailmanStatsException("Plot generation error")
+
 
 def getMlName(mboxpath):
     dot = path.basename(mboxpath).find(".")
@@ -90,6 +92,33 @@ class MailmanStatsException(Exception):
        self.errordescr = text
    def __str__(self):
        return self.errordescr
+
+
+class UserPageGen(Thread):
+    def __init__(self, q, authors):
+        Thread.__init__(self)
+        self.q = q
+        self.authors = authors
+    def run(self):
+        while True:
+            a = self.q.get()
+            peryear, fy, ly = monthlySort(self.authors[a].monthdic)
+            for year in xrange(fy, ly):
+                self.authors[a].years.append(year)
+                try:
+                    plotBarGraph(peryear[year], outputdir+"/ml-files/ml-"+self.authors[a].pagename+"-usage-"+str(year)+".png", "Months", "Emails")
+                except MailmanStatsException:
+                    if dbg:
+                        print "Per Year: "+str(peryear)
+                        print "Year: "+str(year)
+                        print "Author: "+a
+                        print "First Year: "+str(fy)
+                        print "Last Year: "+str(ly)
+            f = open(outputdir+"/ml-files/ml-"+self.authors[a].pagename+".html", 'w')
+            t = pyratemp.Template(filename='user.tpl')
+            result = t(heading=mlname, author=self.authors[a], encoding="utf-8")
+            f.write(result)
+            self.q.task_done()
 
 # Dictionary of Authors
 class Authors:
@@ -152,22 +181,15 @@ class Authors:
         self.sorted_authors_threads = sorted(self.authors, key=lambda x:self.authors[x].started, reverse=True)
 
     def createUserPages(self):
+        queue = Queue.Queue()
+        for i in xrange(1):
+            t = UserPageGen(queue, self.authors)
+            t.setDaemon(True)
+            t.start()
         for a in self.authors:
-            peryear, fy, ly = monthlySort(self.authors[a].monthdic)
-            for year in xrange(fy, ly):
-                self.authors[a].years.append(year)
-                try:
-                    plotBarGraph(peryear[year], outputdir+"/ml-files/ml-"+self.authors[a].pagename+"-usage-"+str(year)+".png", "Months", "Emails")
-                except MailmanStatsException:
-                    if dbg:
-                        print "Per Year: "+str(peryear)
-                        print "Year: "+str(year)
-                        print "Author: "+a
-            f = open(outputdir+"/ml-files/ml-"+self.authors[a].pagename+".html", 'w')
-            t = pyratemp.Template(filename='user.tpl')
-            result = t(heading=mlname, author=self.authors[a], encoding="utf-8")
-            f.write(result)
-
+            queue.put(a)
+                                                       
+             
     def plotEmailsPerAuthor(self):
         tmp = [[a, self.authors[a].posts] for a in self.sorted_authors_emails]
         plotBarGraph(tmp, outputdir+"/ml-files/ml-emailsperauthor.png", "Authors", "Emails", limitable = True)
@@ -235,17 +257,18 @@ class Author:
 
 class Message:
     def __init__(self, message):
+        self.from_mail = None
+        self.date = None
+        self.suject = None
         self.subject = message['subject']
         try:
             r = MAILPROG.search(message['from'])
         except TypeError:
             print "Parsing error: From email '"+str(message['from'])+"'"
-            self.from_mail = None
             return
         if not r:
             if dbg:
                 print "Parsing error: From email '"+message['from']+"'"
-                self.from_mail = None
                 return
         else:
             self.from_mail = r.group(0)
@@ -264,7 +287,6 @@ class Message:
                         print "Parsed date: '"+r.group('date')+"'"
                         print "Parsed month: '"+r.group('month')+"'"
                         print "Parsed time: '"+r.group('time')+"'"
-                    self.date = None
                     return
                 self.date = time.mktime(t)
                 self.month = self.getMonth(t.tm_year, r.group('month'))
@@ -272,7 +294,6 @@ class Message:
         if not r:
             if dbg:
                 print "Parsing error: Message Date '"+message['date']+"'"
-            self.date = None
 
     def getMonth(self, year, month):
         months = {"Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6, "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12}
@@ -313,15 +334,18 @@ if __name__ == "__main__":
             if dbg:
                 print "Couldn't create directory ml-files"
 
-
+        start = time.time()    
         # Parse all messages in mbox file
         for message in mbox:
             msg = Message(message)
             if msg.from_mail and msg.date and msg.subject and msg.month:
                 authors.parseMsg(msg)
+        print "Running took %.3f seconds" % (time.time()-start)
 
+        start = time.time()
         # Calcuate stats and generate charts
         authors.calcStats()
+        print "Running took %.3f seconds" % (time.time()-start)
 
         #  Generate ml-report.html
         f = open(outputfile, 'w')

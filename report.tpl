@@ -3,7 +3,12 @@
 <title>Mailing List Stats</title>
 <script src="sorttable.js"></script>
 <style>
-table.sortable thead {
+body
+{
+    font-family: sans-serif;
+}
+table.sortable thead
+{
     background-color:#eee;
     color:#666666;
     font-weight: bold;
@@ -13,11 +18,13 @@ table.sortable thead {
 a:link, a:visited, a:active {color: blue;}
 a:hover {color: #3399FF;}
 
-th {
+th 
+{
     text-align: left;
 }
 
-h3 {
+h3 
+{
     background-color: lightblue;
 }
 
@@ -26,13 +33,15 @@ img.thumb
 	border:1px solid lightblue;
 }
 
-#footer {                                                                                                                                                                                   
+#footer 
+{                                                                                                                                                                                   
     font-size:80%;                                                                                                                                                              
     font-style:italic;                                                                                                                                                          
     text-align: center;                                                                                                                                                         
 }
 
-#note {
+#note 
+{
     font-size:75%
 }
 </style>

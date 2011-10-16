@@ -113,36 +113,36 @@ class Authors:
             if r: 
                 mail = mail[:-1]
                 self.filterlist.append(mail)
+        f.close()
 
     def parseMsg(self, msg):
-        if (options.filter == False or (options.filter and msg.from_mail in self.filterlist)):
-            if (msg.from_mail not in self.authors):
-                author = Author(msg.from_mail, msg.date)
-                self.authors[msg.from_mail] = author
-                self.totalmails += 1
-            else:
-                self.totalmails += 1
-                self.authors[msg.from_mail].posts += 1
-                self.authors[msg.from_mail].lastmsgdate = msg.date
-                self.authors[msg.from_mail].lastmsgdatestr= time.ctime(msg.date)
+        if (msg.from_mail not in self.authors):
+            author = Author(msg.from_mail, msg.date)
+            self.authors[msg.from_mail] = author
+            self.totalmails += 1
+        else:
+            self.totalmails += 1
+            self.authors[msg.from_mail].posts += 1
+            self.authors[msg.from_mail].lastmsgdate = msg.date
+            self.authors[msg.from_mail].lastmsgdatestr= time.ctime(msg.date)
 
-            try:
-                if "Re:" not in msg.subject or not msg.subject:
-                    self.authors[msg.from_mail].started += 1
-                    self.totalthreads += 1
-            except TypeError: # FIXME test withouit
-                pass
-        
-            if msg.month[:4] not in self.yearmsg:
-                self.yearmsg[msg.month[:4]] = 1
-            else:
-                self.yearmsg[msg.month[:4]] += 1
+        try:
+            if "Re:" not in msg.subject or not msg.subject:
+                self.authors[msg.from_mail].started += 1
+                self.totalthreads += 1
+        except TypeError: # FIXME test withouit
+            pass
+    
+        if msg.month[:4] not in self.yearmsg:
+            self.yearmsg[msg.month[:4]] = 1
+        else:
+            self.yearmsg[msg.month[:4]] += 1
 
-            if msg.month not in self.totalmonth: self.totalmonth[msg.month] = 1
-            if msg.month not in self.authors[msg.from_mail].monthdic: self.authors[msg.from_mail].monthdic[msg.month] = 1
-            else: 
-                self.authors[msg.from_mail].monthdic[msg.month] += 1
-                self.totalmonth[msg.month] += 1
+        if msg.month not in self.totalmonth: self.totalmonth[msg.month] = 1
+        if msg.month not in self.authors[msg.from_mail].monthdic: self.authors[msg.from_mail].monthdic[msg.month] = 1
+        else: 
+            self.authors[msg.from_mail].monthdic[msg.month] += 1
+            self.totalmonth[msg.month] += 1
 
     def calcAverage(self):
         for a in self.authors:
@@ -319,8 +319,6 @@ if __name__ == "__main__":
         mlname = getMlName(options.mbox)
         dbg = options.debug
 
-        if options.filter: authors.parseFile("parse.txt")
-
         # Create Directory for extra files
         try:
             mkdir(outputdir+"/ml-files/")
@@ -328,11 +326,12 @@ if __name__ == "__main__":
             if dbg:
                 print "Couldn't create directory ml-files"
 
+        if options.filter: authors.parseFile("parse.txt")
 
         # Parse all messages in mbox file
         for message in mbox:
             msg = Message(message)
-            if msg.from_mail and msg.date and msg.subject and msg.month:
+            if msg.from_mail and msg.date and msg.subject and msg.month and (options.filter == False or (options.filter and msg.from_mail in authors.filterlist)):
                 authors.parseMsg(msg)
 
         # Calcuate stats and generate charts

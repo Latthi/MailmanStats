@@ -3,6 +3,10 @@
 <title>Mailing List Stats</title>
 <script src="sorttable.js"></script>
 <style>
+body
+{
+    font-family: sans-serif;
+}
 table.sortable thead
 {
     background-color:#eee;

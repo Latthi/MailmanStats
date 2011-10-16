@@ -95,6 +95,7 @@ class MailmanStatsException(Exception):
 class Authors:
     def __init__(self):
         self.authors = {}
+        self.filterlist=[]
         self.sorted_authors_emails = []
         self.sorted_authors_threads = []
         self.totalmails = 0                                                                                                                                                                                
@@ -103,34 +104,45 @@ class Authors:
         self.years = []
         self.yearmsg = {}
 
+    def parseFile(self, file):
+        f = open('parse.txt')
+        while True:
+            mail = f.readline()
+            if len(mail) == 0: break
+            r = MAILPROG.match(mail)
+            if r: 
+                mail = mail[:-1]
+                self.filterlist.append(mail)
+
     def parseMsg(self, msg):
-        if (msg.from_mail not in self.authors):
-            author = Author(msg.from_mail, msg.date)
-            self.authors[msg.from_mail] = author
-            self.totalmails += 1
-        else:
-            self.totalmails += 1
-            self.authors[msg.from_mail].posts += 1
-            self.authors[msg.from_mail].lastmsgdate = msg.date
-            self.authors[msg.from_mail].lastmsgdatestr= time.ctime(msg.date)
+        if (options.filter == False or (options.filter and msg.from_mail in self.filterlist)):
+            if (msg.from_mail not in self.authors):
+                author = Author(msg.from_mail, msg.date)
+                self.authors[msg.from_mail] = author
+                self.totalmails += 1
+            else:
+                self.totalmails += 1
+                self.authors[msg.from_mail].posts += 1
+                self.authors[msg.from_mail].lastmsgdate = msg.date
+                self.authors[msg.from_mail].lastmsgdatestr= time.ctime(msg.date)
 
-        try:
-            if "Re:" not in msg.subject or not msg.subject:
-                self.authors[msg.from_mail].started += 1
-                self.totalthreads += 1
-        except TypeError: # FIXME test withouit
-            pass
+            try:
+                if "Re:" not in msg.subject or not msg.subject:
+                    self.authors[msg.from_mail].started += 1
+                    self.totalthreads += 1
+            except TypeError: # FIXME test withouit
+                pass
         
-        if msg.month[:4] not in self.yearmsg:
-            self.yearmsg[msg.month[:4]] = 1
-        else:
-            self.yearmsg[msg.month[:4]] += 1
+            if msg.month[:4] not in self.yearmsg:
+                self.yearmsg[msg.month[:4]] = 1
+            else:
+                self.yearmsg[msg.month[:4]] += 1
 
-        if msg.month not in self.totalmonth: self.totalmonth[msg.month] = 1
-        if msg.month not in self.authors[msg.from_mail].monthdic: self.authors[msg.from_mail].monthdic[msg.month] = 1
-        else: 
-            self.authors[msg.from_mail].monthdic[msg.month] += 1
-            self.totalmonth[msg.month] += 1
+            if msg.month not in self.totalmonth: self.totalmonth[msg.month] = 1
+            if msg.month not in self.authors[msg.from_mail].monthdic: self.authors[msg.from_mail].monthdic[msg.month] = 1
+            else: 
+                self.authors[msg.from_mail].monthdic[msg.month] += 1
+                self.totalmonth[msg.month] += 1
 
     def calcAverage(self):
         for a in self.authors:
@@ -291,6 +303,7 @@ if __name__ == "__main__":
         parser.add_argument("-l", "--limit", type=int, default=100, dest="limit", help="Choose the number of authors you want to be shown in the charts. Default top 100 authors.")
         parser.add_argument("-u", "--unmask", default=True, dest="masked", action="store_false", help="Use this option to show email addresses.")
         parser.add_argument("-d", "--debug", default=False, dest="debug", action="store_true", help="Use this option if you want to enable debug output.")
+        parser.add_argument("-f", "--filter", default=False, dest="filter", action="store_true", help="Use this option to filter only the e-mails from parse.txt")
         parser.add_argument("mbox", help="Mbox File")
         options = parser.parse_args()
 
@@ -305,6 +318,8 @@ if __name__ == "__main__":
         authors = Authors()
         mlname = getMlName(options.mbox)
         dbg = options.debug
+
+        if options.filter: authors.parseFile("parse.txt")
 
         # Create Directory for extra files
         try:

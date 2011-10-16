@@ -1,8 +1,4 @@
 To Do List
- 1. Filter (--filter -f) option which will parse a file with certain emails and it will show only those in the report.
- 2. Threaded message parsing.
- 3. Online version checking
- 4. Cache like webalizer.
- 5. Progress bar.
-
-
+ 1. Online version checking
+ 2. Cache like webalizer.
+ 3. Progress bar.

@@ -326,7 +326,7 @@ if __name__ == "__main__":
         parser.add_argument("-l", "--limit", type=int, default=100, dest="limit", help="Choose the number of authors you want to be shown in the charts. Default top 100 authors.")
         parser.add_argument("-u", "--unmask", default=True, dest="masked", action="store_false", help="Use this option to show email addresses.")
         parser.add_argument("-d", "--debug", default=False, dest="debug", action="store_true", help="Use this option if you want to enable debug output.")
-        parser.add_argument("-f", "--filter", type=argparse.FileType(), dest="filter", help="Use this option to filter only the e-mails from parse.txt")
+        parser.add_argument("-f", "--filter", type=argparse.FileType(), dest="filter", help="Select the file that includes the email address you wish your report to have. The file should have one address per line.")
         parser.add_argument("mbox", help="Mbox File")
         options = parser.parse_args()
 

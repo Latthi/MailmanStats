@@ -1,3 +1,16 @@
+#
+# Copyright (C) 2000-2005 by Yasushi Saito (yasushi.saito@gmail.com)
+# 
+# Jockey is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any
+# later version.
+#
+# Jockey is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
 import coord
 import canvas
 
@@ -19,9 +32,16 @@ class T(coord.T):
         for v in self.data:
             if v[self.col] == val:
                 return size * i / float(len(self.data))
-            i = i + 1
+            i += 1
         # the drawing area is clipped. So negative offset will make this plot
         # invisible.
         return canvas.invalid_coord;
     def get_tics(self, min, max, interval):
-        return map(lambda pair, col=self.col: pair[col], self.data)
+        tics = []
+        if interval == None: interval = 1
+        
+        for i in range(0, len(self.data), interval):
+            tics.append(self.data[i][self.col])
+        return tics    
+        #return map(lambda pair, self = self: pair[self.col], self.data)
+

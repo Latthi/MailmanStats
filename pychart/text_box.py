@@ -1,38 +1,51 @@
+#
+# Copyright (C) 2000-2005 by Yasushi Saito (yasushi.saito@gmail.com)
+# 
+# Jockey is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any
+# later version.
+#
+# Jockey is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#
 import canvas
 import line_style
 import pychart_util
 import fill_style
 import font
 import chart_object
-import types
 import color
 import arrow
 import text_box_doc
+from pychart_types import *
+from types import *
 
 class T(chart_object.T):
     __doc__ = text_box_doc.doc
-    keys = {"text": (types.StringType, 0, "???", "Text body. <<font>>"),
-            "loc": (types.TupleType, 0, (0,0),
+    keys = {"text": (StringType, "???", "Text body. <<font>>"),
+            "loc": (TupleType, (0,0),
                     "The location of the text box."),
-            "line_style": (line_style.T, 1, line_style.default,
-                           """The line style of the surrounding frame.
-                           <<line_style>>."""),
-            "fill_style": (fill_style.T, 1, fill_style.white,
-                           "The fill style. <<fill_style>>."),
-            "top_fudge": (pychart_util.NumType, 0, 0,
+            "line_style": (line_style.T, line_style.default,
+                           """The line style of the surrounding frame."""),
+            "fill_style": (fill_style.T, fill_style.white,
+                           "Specifies the fill style of the text box."),
+            "top_fudge": (UnitType, 0,
                           "The amount of space (in points) above the first line"),
-            "bottom_fudge": (pychart_util.NumType, 0, 5,
+            "bottom_fudge": (UnitType, 5,
                              "The amount of space below the last line"),
-            "left_fudge": (pychart_util.NumType, 0, 5,
+            "left_fudge": (UnitType, 5,
                            "The amount of space left of the box"),
-            "right_fudge": (pychart_util.NumType, 0, 5,
+            "right_fudge": (UnitType, 5,
                             "The amount of space right of the box"),
-            "arrows": (types.ListType, 0, pychart_util.new_list, "The list of arrows. Not to be touched by the user directly"),
-	    "radius": (pychart_util.NumType, 0, 0,
+            "_arrows": (ListType, pychart_util.new_list, "The list of arrows. Not to be touched by the user directly"),
+	    "radius": (UnitType, 0,
                        """Radius of the four corners of the rectangle.
                        If the value is zero, a sharp-cornered
                        rectangle is drawn."""),
-            "shadow": (pychart_util.ShadowType, 1, None,
+            "shadow": (ShadowType, None,
                        pychart_util.shadow_desc)
             }
 ##AUTOMATICALLY GENERATED
@@ -83,9 +96,11 @@ class T(chart_object.T):
         top-center point of the text box. ARROW specifies the style of
         the arrow. <<arrow>>.
         """
-        self.arrows.append((tipLoc, tail, arrow))
+        self._arrows.append((tipLoc, tail, arrow))
         
-    def draw(self):
+    def draw(self, can = None):
+        if can == None:
+            can = canvas.default_canvas()
         x = self.loc[0]
         y = self.loc[1]
         text_width = font.text_width(self.text)
@@ -95,22 +110,22 @@ class T(chart_object.T):
         if self.line_style or self.fill_style:
             width = text_width+self.left_fudge+self.right_fudge
             height = text_height+self.bottom_fudge+self.top_fudge
-            canvas.round_rectangle(self.line_style, self.fill_style,
+            can.round_rectangle(self.line_style, self.fill_style,
                                    x-self.left_fudge, y-self.bottom_fudge,
                                    x-self.left_fudge+width, y-self.bottom_fudge+height,
                                    self.radius, self.shadow)
 
         if halign == 'L':
-            canvas.show(x, y, self.text)
+            can.show(x, y, self.text)
         elif halign == 'C':
-            canvas.show(x+text_width/2.0, y, self.text)
+            can.show(x+text_width/2.0, y, self.text)
         elif halign == 'R':
-            canvas.show(x+text_width, y, self.text)
+            can.show(x+text_width, y, self.text)
         else:
             raise Exception, "Unsupported alignment (" + halign + ")"
 
         # draw arrows
-        for t in self.arrows:
+        for t in self._arrows:
             (tipLoc, tail, arrow) = t
             if tail:
                 (x, y, width, height) = self.get_dimension()
@@ -132,7 +147,6 @@ class T(chart_object.T):
                         raise ValueError, tail +  ": unknown tail location spec."
             else:
                 origin = self.choose_end_point(tipLoc[0], tipLoc[1])
-                
-            arrow.draw((origin, tipLoc))
+            arrow.draw((origin, tipLoc), can)
             
 

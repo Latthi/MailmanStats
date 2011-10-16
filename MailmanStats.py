@@ -182,7 +182,7 @@ class Authors:
 
     def createUserPages(self):
         queue = Queue.Queue()
-        for i in xrange(1):
+        for i in xrange(2):
             t = UserPageGen(queue, self.authors)
             t.setDaemon(True)
             t.start()

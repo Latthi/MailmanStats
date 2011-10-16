@@ -8,15 +8,17 @@ from pychart import *
 
 ### GLOBAL ###
 # Constants
-MONTH = "(?P<month>Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)"
-YEAR = "(?P<year>[0-9]{2,4})"
-DAY = "(Mon|Tue|Wed|Thu|Fri|Sat|Sun)"
-TIME = "(?P<time>[0-9:]{8})"
-DATE = "(?P<date>[0-9]{1,2})"
-MAILPROG = re.compile("([A-Za-z0-9._%+-]+)[@]([A-Za-z0-9.-]+)[.]([A-Za-z]{2,4})")
-DATEREGEX = (DAY+"[,][ ]"+DATE+"[ ]"+MONTH+"[ ]"+YEAR+"[ ]"+TIME, DAY+"[ ]"+MONTH+"[ ]"+DATE+"[ ]"+TIME+"[ ]"+YEAR, DATE+"[ ]"+MONTH+"[ ]"+YEAR+"[ ]"+TIME,
-DATEPROG = [re.compile(d) for d in DATEREGEX]
-
+try:
+    MONTH = "(?P<month>Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)"
+    YEAR = "(?P<year>[0-9]{2,4})"
+    DAY = "(Mon|Tue|Wed|Thu|Fri|Sat|Sun)"
+    TIME = "(?P<time>[0-9:]{5,8})"
+    DATE = "(?P<date>[0-9]{1,2})"
+    MAILPROG = re.compile("([A-Za-z0-9._%+-]+)[@]([A-Za-z0-9.-]+)[.]([A-Za-z]{2,4})")
+    DATEREGEX = (DAY+"[,][ ]"+DATE+"[ ]"+MONTH+"[ ]"+YEAR+"[ ]"+TIME, DAY+"[ ]"+MONTH+"[ ]"+DATE+"[ ]"+TIME+"[ ]"+YEAR, DATE+"[ ]"+MONTH+"[ ]"+YEAR+"[ ]"+TIME, DAY+"[ ]"+MONTH+"[ ]+"+DATE+"[ ]"+TIME+" "+YEAR)
+    DATEPROG = [re.compile(d) for d in DATEREGEX]
+except KeyboardInterrupt:
+    pass
 
 # Functions
 def plotBarGraph(data, outputfile, xlabel, ylabel, thumb = False, limitable = False):
@@ -45,16 +47,17 @@ def plotBarGraph(data, outputfile, xlabel, ylabel, thumb = False, limitable = Fa
     else:
         ar = area.T(size = (250,150), x_coord = category_coord.T(cropped, 0), y_range = (0,None), legend = None)
         ar.add_plot(bar_plot.T(data = cropped, fill_style = fs))
-    ar.draw()
+    try:
+        ar.draw()
+    except ValueError:
+        if dbg:
+            print "Input Data: "+str(data)
+            print "Cropped Data: "+str(cropped)
+        raise MailmanStatsException("Plot generation error")
 
 def getMlName(mboxpath):
     dot = path.basename(mboxpath).find(".")
     return path.basename(mboxpath)[:dot]
-
-
-def dictSub(text, dictionary):
-    prog = re.compile('|'.join(map(re.escape, dictionary)))
-    return prog.sub(str(dictionary[prog.match(text).group(0)]), text)
 
 
 def monthlySort(data):
@@ -81,6 +84,12 @@ def monthlySort(data):
         years[year] = sorted(peryear, key=lambda x: months.index(x[0]))
     return (years, firstyear, lastyear+1)
 
+# Classes
+class MailmanStatsException(Exception):
+   def __init__(self, text):
+       self.errordescr = text
+   def __str__(self):
+       return self.errordescr
 
 # Dictionary of Authors
 class Authors:
@@ -109,7 +118,7 @@ class Authors:
             if "Re:" not in msg.subject or not msg.subject:
                 self.authors[msg.from_mail].started += 1
                 self.totalthreads += 1
-        except TypeError:
+        except TypeError: # FIXME test withouit
             pass
         
         if msg.month[:4] not in self.yearmsg:
@@ -125,7 +134,8 @@ class Authors:
 
     def calcAverage(self):
         for a in self.authors:
-            try: self.authors[a].average = str(round(self.authors[a].posts / int((time.time() - self.authors[a].firstmsgdate) / 86400), 3))
+            try: 
+                self.authors[a].average = str(round(self.authors[a].posts / int((time.time() - self.authors[a].firstmsgdate) / 86400), 3))
             except ZeroDivisionError: pass
 
     def calcStats(self):
@@ -146,7 +156,13 @@ class Authors:
             peryear, fy, ly = monthlySort(self.authors[a].monthdic)
             for year in xrange(fy, ly):
                 self.authors[a].years.append(year)
-                plotBarGraph(peryear[year], outputdir+"/ml-files/ml-"+self.authors[a].pagename+"-usage-"+str(year)+".png", "Months", "Emails")
+                try:
+                    plotBarGraph(peryear[year], outputdir+"/ml-files/ml-"+self.authors[a].pagename+"-usage-"+str(year)+".png", "Months", "Emails")
+                except MailmanStatsException:
+                    if dbg:
+                        print "Per Year: "+str(peryear)
+                        print "Year: "+str(year)
+                        print "Author: "+a
             f = open(outputdir+"/ml-files/ml-"+self.authors[a].pagename+".html", 'w')
             t = pyratemp.Template(filename='user.tpl')
             result = t(heading=mlname, author=self.authors[a], encoding="utf-8")
@@ -174,7 +190,6 @@ class Authors:
             self.years.append(year)
             plotBarGraph(peryear[year], outputdir+"/ml-files/ml-usage-"+str(year)+".png", "Months", "Emails")
 
-
     def __str__(self):
         for author in self.authors:
             print(self.authors[author])
@@ -197,7 +212,9 @@ class Author:
         self.average = 0
 
     def maskMail(self, mail):
-        r = MAILPROG.match(mail) #FIXME
+        r = MAILPROG.match(mail)
+        if not r and dbg:
+            print "Parsing error: Mail address '"+mail+"'"
         cut = int((len(r.group(1))-2) /2)
         name = r.group(1)[:-cut]
         middle = r.group(2)[0]+"..."+r.group(2)[-1]
@@ -213,87 +230,106 @@ class Author:
         return mail[:at]
 
     def __str__(self):
-        return self.mail+" "+str(self.posts)+" "+str(self.started)+" "+str(self.lastmsgdate)
+        text = "=====Author=====\nPosts: %i\nThreads: %i\nLast MSG Date: %i\nFirst MSG Date: %i\nName: %s\nPage Name: %s\nPer Month: %s\nYears: %s\nAverage: %f" % (self.posts, self.started, self.lastmsgdate, self.firstmsgdate, self.name, self.pagename, self.monthdic, self.years, self.average)
+        return text
 
 class Message:
     def __init__(self, message):
         self.subject = message['subject']
-        r = MAILPROG.search(message['from'])
+        try:
+            r = MAILPROG.search(message['from'])
+        except TypeError:
+            print "Parsing error: From email '"+str(message['from'])+"'"
+            self.from_mail = None
+            return
         if not r:
-            raise TypeError #FIXME
-        self.from_mail = r.group(0)
+            if dbg:
+                print "Parsing error: From email '"+message['from']+"'"
+                self.from_mail = None
+                return
+        else:
+            self.from_mail = r.group(0)
         for d in DATEPROG:
-            r = d.search(message['date']) #FIXME
-            print message['date']
+            r = d.search(message['date'])
             if r:
-                print "mpika"
-                if len(r.group('year')) == 4:
-                    t = time.strptime(r.group('date')+" "+r.group('month')+" "+r.group('year')+" "+r.group('time'), '%d %b %Y %H:%M:%S')
-                else:
-                    t = time.strptime(r.group('date')+" "+r.group('month')+" "+r.group('year')+" "+r.group('time'), '%d %b %y %H:%M:%S')
-                print time.mktime(t)
+                try:
+                    if len(r.group('year')) == 4:
+                        t = time.strptime(r.group('date')+" "+r.group('month')+" "+r.group('year')+" "+r.group('time'), '%d %b %Y %H:%M:%S')
+                    else:
+                        t = time.strptime(r.group('date')+" "+r.group('month')+" "+r.group('year')+" "+r.group('time'), '%d %b %y %H:%M:%S')
+                except ValueError:
+                    if dbg:
+                        print "Message date: '"+message['date']+"'"
+                        print "Parsed year: '"+r.group('year')+"'"
+                        print "Parsed date: '"+r.group('date')+"'"
+                        print "Parsed month: '"+r.group('month')+"'"
+                        print "Parsed time: '"+r.group('time')+"'"
+                    self.date = None
+                    return
                 self.date = time.mktime(t)
-                self.month = r.group('month')
+                self.month = self.getMonth(t.tm_year, r.group('month'))
                 break
+        if not r:
+            if dbg:
+                print "Parsing error: Message Date '"+message['date']+"'"
+            self.date = None
 
-    def getMonth(self, date):
-        r = MONTHPROG.search(date) #FIXME
+    def getMonth(self, year, month):
         months = {"Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6, "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12}
-        month = dictSub(r.group(1), months)
-        return "%s%02d" % (r.group(2), int(month))
+        return "%s%02d" % (year, int(months[month]))
 
 
     def __str__(self):
-        print self.subject+" "+self.from_mail+" "+self.date
+        text = "=====Message=====\nSubject: %s\nFrom: %s\nTimestamp: %f\nYearMonth: %s" % (self.subject, self.from_mail, self.date, self.month)
+        return text
         
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="MailmanStats is a python script that generates an HTML report for a Mailman based mailing list. It takes the mailbox path as an argument and presents useful information such as mails sent per user, threads created per user, mails sent per month, activity per user and more. It also creates statistics and submits them using graphs.") # FIXME add epilog
-    parser.add_argument("-o", "--output", default="./", dest="output", help="Use this option to change the output directory. Default: Current working directory.")
-    parser.add_argument("-l", "--limit", type=int, default=100, dest="limit", help="Choose the number of authors you want to be shown in the charts. Default top 100 authors.")
-    parser.add_argument("-u", "--unmask", default=True, dest="masked", action="store_false", help="Use this option to show email addresses.")
-    parser.add_argument("-d", "--debug", default=False, dest="debug", action="store_true", help="Use this option if you want to enable debug output.")
-    parser.add_argument("mbox", help="Mbox File")
-    options = parser.parse_args()
-
-    if not path.isfile(options.mbox):
-        print "This is not a file!"
-        sys.exit()
-
-    mbox = mailbox.mbox(options.mbox)
-    outputfile = "ml-report.html"
-    limit = options.limit
-    outputdir = options.output
-    authors = Authors()
-    mlname = getMlName(options.mbox)
-    dbg = options.debug
-
-    # Create Directory for extra files
     try:
-        mkdir(outputdir+"/ml-files/")
-    except OSError, e:
-        if dbg:
-            print e # FIXME
+        parser = argparse.ArgumentParser(description="MailmanStats is a python script that generates an HTML report for a Mailman based mailing list. It takes the mailbox path as an argument and presents useful information such as mails sent per user, threads created per user, mails sent per month, activity per user and more. It also creates statistics and submits them using graphs.") # FIXME add epilog
+        parser.add_argument("-o", "--output", default="./", dest="output", help="Use this option to change the output directory. Default: Current working directory.")
+        parser.add_argument("-l", "--limit", type=int, default=100, dest="limit", help="Choose the number of authors you want to be shown in the charts. Default top 100 authors.")
+        parser.add_argument("-u", "--unmask", default=True, dest="masked", action="store_false", help="Use this option to show email addresses.")
+        parser.add_argument("-d", "--debug", default=False, dest="debug", action="store_true", help="Use this option if you want to enable debug output.")
+        parser.add_argument("mbox", help="Mbox File")
+        options = parser.parse_args()
 
-    # Parse all messages in mbox file
-    for message in mbox:
+        if not path.isfile(options.mbox):
+            print "This is not a file!"
+            sys.exit()
+
+        mbox = mailbox.mbox(options.mbox)
+        outputfile = "ml-report.html"
+        limit = options.limit
+        outputdir = options.output
+        authors = Authors()
+        mlname = getMlName(options.mbox)
+        dbg = options.debug
+
+        # Create Directory for extra files
         try:
-            msg = Message(message)
-            authors.parseMsg(msg)
-        except TypeError, e:
+            mkdir(outputdir+"/ml-files/")
+        except OSError, e:
             if dbg:
-                print e #FIXME
-            continue
-
-    authors.calcStats()
-
-    #  Generate ml-report.html
-    f = open(outputfile, 'w')
-    t = pyratemp.Template(filename='report.tpl')
-    result = t(heading=mlname, totalmails=authors.totalmails, totalthreads=authors.totalthreads, mydic=authors.authors, sa=authors.sorted_authors_emails, yr=authors.years, ac=len(authors.authors))
-    f.write(result)
-    f.close()
+                print "Couldn't create directory ml-files"
 
 
+        # Parse all messages in mbox file
+        for message in mbox:
+            msg = Message(message)
+            if msg.from_mail and msg.date and msg.subject and msg.month:
+                authors.parseMsg(msg)
+
+        # Calcuate stats and generate charts
+        authors.calcStats()
+
+        #  Generate ml-report.html
+        f = open(outputfile, 'w')
+        t = pyratemp.Template(filename='report.tpl')
+        result = t(heading=mlname, totalmails=authors.totalmails, totalthreads=authors.totalthreads, mydic=authors.authors, sa=authors.sorted_authors_emails, yr=authors.years, ac=len(authors.authors))
+        f.write(result)
+        f.close()
+    except KeyboardInterrupt:
+        pass
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4

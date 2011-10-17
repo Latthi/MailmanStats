@@ -326,7 +326,7 @@ if __name__ == "__main__":
         parser.add_argument("-l", "--limit", type=int, default=100, dest="limit", help="Choose the number of authors you want to be shown in the charts. Default top 100 authors.")
         parser.add_argument("-u", "--unmask", default=True, dest="masked", action="store_false", help="Use this option to show email addresses.")
         parser.add_argument("-d", "--debug", default=False, dest="debug", action="store_true", help="Use this option if you want to enable debug output.")
-        parser.add_argument("-f", "--filter", type=argparse.FileType(), dest="filter", help="Select the file that includes the email address you wish your report to have. The file should have one address per line.")
+        parser.add_argument("-f", "--filter", default=None, type=argparse.FileType(), dest="filter", help="Select the file that includes the email address you wish your report to have. The file should have one address per line.")
         parser.add_argument("mbox", help="Mbox File")
         options = parser.parse_args()
 
@@ -341,7 +341,7 @@ if __name__ == "__main__":
         authors = Authors()
         mlname = getMlName(options.mbox)
         dbg = options.debug
-
+        
         # Create Directory for extra files
         try:
             mkdir(outputdir+"/ml-files/")
@@ -355,7 +355,9 @@ if __name__ == "__main__":
         # Parse all messages in mbox file
         for message in mbox:
             msg = Message(message)
-            if msg.from_mail and msg.date and msg.subject and msg.month and (options.filter == False or (options.filter and msg.from_mail in filterlist)):
+            if options.filter and msg.from_mail not in filterlist:
+                continue
+            if msg.from_mail and msg.date and msg.subject and msg.month:
                 authors.parseMsg(msg)
 
         # Calcuate stats and generate charts

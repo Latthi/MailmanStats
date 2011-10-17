@@ -364,7 +364,7 @@ if __name__ == "__main__":
         authors.calcStats()
 
         #  Generate ml-report.html
-        f = open(outputfile, 'w')
+        f = open(outputdir+"/"+outputfile, 'w')
         t = pyratemp.Template(filename='report.tpl')
         result = t(heading=mlname, totalmails=authors.totalmails, totalthreads=authors.totalthreads, mydic=authors.authors, sa=authors.sorted_authors_emails, yr=authors.years, ac=len(authors.authors))
         f.write(result)

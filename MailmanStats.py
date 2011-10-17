@@ -4,7 +4,7 @@ from __future__ import division
 from threading import Thread
 from os import path, walk, mkdir
 from pychart import *
-import mailbox, sys, re, pyratemp, time, Queue, argparse
+import mailbox, sys, re, pyratemp, time, Queue, argparse, shutil
 
 
 ### GLOBAL ###
@@ -341,7 +341,20 @@ if __name__ == "__main__":
         authors = Authors()
         mlname = getMlName(options.mbox)
         dbg = options.debug
-        
+        curdir, curfile = path.split(path.abspath(__file__))       
+
+        # Create the output directory if it doesn't exist
+        try:
+            if not path.exists(outputdir):
+                mkdir(outputdir)
+        except OSError, e:
+                print "Couldn't create directory %s" % outputdir
+                sys.exit()
+
+        # Copy sorttable.js
+        if outputdir != "./":
+            shutil.copyfile(curdir+"/sorttable.js", outputdir+"/sorttable.js")
+
         # Create Directory for extra files
         try:
             mkdir(outputdir+"/ml-files/")
@@ -360,7 +373,7 @@ if __name__ == "__main__":
             if msg.from_mail and msg.date and msg.subject and msg.month:
                 authors.parseMsg(msg)
 
-        # Calcuate stats and generate charts
+        # Calculate stats and generate charts
         authors.calcStats()
 
         #  Generate ml-report.html

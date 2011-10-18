@@ -50,9 +50,10 @@ def plotBarGraph(data, outputfile, xlabel, ylabel, thumb = False, limitable = Fa
         ar.add_plot(bar_plot.T(data = cropped, fill_style = fs))
     try:
         ar.draw(can)
-    except ValueError:
+    except ValueError, e:
         if dbg:
-            print "Input Data: "+str(data)
+            print "--------------------------------------"
+            print e
             print "Cropped Data: "+str(cropped)
         raise MailmanStatsException("Plot generation error")
 
@@ -186,13 +187,14 @@ class Authors:
     def calcStats(self):
         self.calcAverage()
         self.sortAuthors()
-        self.createUserPages()
+        q = self.createUserPages()
         self.plotEmailsPerAuthor()
         self.plotThreadsPerAuthor()
         self.plotMonthlyUsage()
         self.plotYearlyUsage()
         self.lastyear = max(self.years)
         self.saveAuthors()
+        return q
     
     def sortAuthors(self):
         self.sorted_authors_emails = sorted(self.authors, key=lambda x:self.authors[x].posts, reverse=True)
@@ -206,6 +208,7 @@ class Authors:
             t.start()
         for a in self.authors:
             queue.put(a)
+        return queue
                                                        
     def plotEmailsPerAuthor(self):
         tmp = [[a, self.authors[a].posts] for a in self.sorted_authors_emails]
@@ -284,7 +287,7 @@ class Message:
         self.from_mail = None
         self.subject = None
         self.date = None
-        self.subject = message['subject']
+        self.subject = message['subject'] # FIXME we shouldn't store the whole subject
         try:
             r = MAILPROG.search(message['from'])
         except TypeError:
@@ -406,14 +409,15 @@ if __name__ == "__main__":
             sys.exit()
 
         # Calculate stats and generate charts.
-        authors.calcStats()
+        q = authors.calcStats()
 
-        #  Generate ml-report.html.
+        #  Generate ml-report.html. FIXME disable js when users > 2000
         f = open(outputdir+"/"+outputfile, 'w')
         t = pyratemp.Template(filename='report.tpl')
         result = t(heading=mlname, totalmails=authors.totalmails, totalthreads=authors.totalthreads, mydic=authors.authors, sa=authors.sorted_authors_emails, yr=authors.years, ac=len(authors.authors))
         f.write(result)
         f.close()
+        q.join()
     except KeyboardInterrupt:
         pass
 

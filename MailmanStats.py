@@ -4,7 +4,7 @@ from __future__ import division
 from threading import Thread
 from os import path, walk, mkdir
 from pychart import *
-import mailbox, sys, re, pyratemp, time, Queue, argparse, shutil
+import mailbox, sys, re, pyratemp, time, Queue, argparse, shutil, pickle
 
 
 ### GLOBAL ###
@@ -109,16 +109,19 @@ class MailmanStatsException(Exception):
 
 
 class UserPageGen(Thread):
-    def __init__(self, q, authors):
+    def __init__(self, q, authors, lastyear):
         Thread.__init__(self)
         self.q = q
         self.authors = authors
+        self.lastyear = lastyear
     def run(self):
         while True:
             a = self.q.get()
             peryear, fy, ly = monthlySort(self.authors[a].monthdic)
             for year in xrange(fy, ly):
                 self.authors[a].years.append(year)
+                if cached and year < self.lastyear:
+                    continue 
                 try:
                     plotBarGraph(peryear[year], outputdir+"/ml-files/ml-"+self.authors[a].pagename+"-usage-"+str(year)+".png", "Months", "Emails")
                 except MailmanStatsException:
@@ -136,7 +139,7 @@ class UserPageGen(Thread):
 
 # Dictionary of Authors
 class Authors:
-    def __init__(self):
+    def __init__(self, lastmsg):
         self.authors = {}
         self.sorted_authors_emails = []
         self.sorted_authors_threads = []
@@ -145,8 +148,8 @@ class Authors:
         self.totalmonth = {}
         self.years = []
         self.yearmsg = {}
-
-
+        self.lastmsg = lastmsg
+        self.lastyear = 0
 
     def parseMsg(self, msg):
         if (msg.from_mail not in self.authors):
@@ -188,6 +191,8 @@ class Authors:
         self.plotThreadsPerAuthor()
         self.plotMonthlyUsage()
         self.plotYearlyUsage()
+        self.lastyear = max(self.years)
+        self.saveAuthors()
     
     def sortAuthors(self):
         self.sorted_authors_emails = sorted(self.authors, key=lambda x:self.authors[x].posts, reverse=True)
@@ -196,13 +201,12 @@ class Authors:
     def createUserPages(self):
         queue = Queue.Queue()
         for i in xrange(2):
-            t = UserPageGen(queue, self.authors)
+            t = UserPageGen(queue, self.authors, self.lastyear)
             t.setDaemon(True)
             t.start()
         for a in self.authors:
             queue.put(a)
                                                        
-             
     def plotEmailsPerAuthor(self):
         tmp = [[a, self.authors[a].posts] for a in self.sorted_authors_emails]
         plotBarGraph(tmp, outputdir+"/ml-files/ml-emailsperauthor.png", "Authors", "Emails", limitable = True)
@@ -222,8 +226,15 @@ class Authors:
     def plotMonthlyUsage(self):
         peryear, fy, ly = monthlySort(self.totalmonth)
         for year in xrange(fy, ly):
-            self.years.append(year)
+            if cached and year < self.lastyear:
+                continue 
+            if year not in self.years:
+                self.years.append(year)
             plotBarGraph(peryear[year], outputdir+"/ml-files/ml-usage-"+str(year)+".png", "Months", "Emails")
+
+    def saveAuthors(self):
+        f = open(curdir+"/ml-"+mlname+"-cache.dat", "wb")
+        pickle.dump(self, f)
 
     def __str__(self):
         for author in self.authors:
@@ -330,20 +341,31 @@ if __name__ == "__main__":
         parser.add_argument("mbox", help="Mbox File")
         options = parser.parse_args()
 
+        # Check if the given file is actually a file.
         if not path.isfile(options.mbox):
             print "This is not a file!"
             sys.exit()
 
+        # Initialize vars.
+        curdir, curfile = path.split(path.abspath(__file__))       
         mbox = mailbox.mbox(options.mbox)
         outputfile = "ml-report.html"
         limit = options.limit
         outputdir = options.output
-        authors = Authors()
         mlname = getMlName(options.mbox)
         dbg = options.debug
-        curdir, curfile = path.split(path.abspath(__file__))       
+        cached = False
+        start = 0
 
-        # Create the output directory if it doesn't exist
+        # Check if there is a cache file for that list.
+        if path.exists(curdir+"/ml-"+mlname+"-cache.dat"):
+            f = open(curdir+"/ml-"+mlname+"-cache.dat", "rb")
+            cached = True
+            authors = pickle.load(f)
+        else:
+            authors = Authors(len(mbox))
+
+        # Create the output directory if it doesn't exist.
         try:
             if not path.exists(outputdir):
                 mkdir(outputdir)
@@ -351,32 +373,42 @@ if __name__ == "__main__":
                 print "Couldn't create directory %s" % outputdir
                 sys.exit()
 
-        # Copy sorttable.js
+        # Copy sorttable.js.
         if outputdir != "./":
             shutil.copyfile(curdir+"/sorttable.js", outputdir+"/sorttable.js")
 
-        # Create Directory for extra files
+        # Create Directory for extra files.
         try:
             mkdir(outputdir+"/ml-files/")
         except OSError, e:
             if dbg:
                 print "Couldn't create directory ml-files"
 
+        # Check if the filter option is selected and parse the file.
         if options.filter:
             filterlist = parseFile(options.filter)
 
-        # Parse all messages in mbox file
-        for message in mbox:
-            msg = Message(message)
+        # Retreive last message parsed from the previous run.
+        if cached:
+            start = authors.lastmsg
+        
+        # Parse all messages in mbox file.
+        for msgc in xrange(start, len(mbox)):
+            msg = Message(mbox[msgc])
             if options.filter and msg.from_mail not in filterlist:
                 continue
             if msg.from_mail and msg.date and msg.subject and msg.month:
                 authors.parseMsg(msg)
+        
+        # If there are no new messages exit.
+        if start == len(mbox):
+            print "No new messages!"
+            sys.exit()
 
-        # Calculate stats and generate charts
+        # Calculate stats and generate charts.
         authors.calcStats()
 
-        #  Generate ml-report.html
+        #  Generate ml-report.html.
         f = open(outputdir+"/"+outputfile, 'w')
         t = pyratemp.Template(filename='report.tpl')
         result = t(heading=mlname, totalmails=authors.totalmails, totalthreads=authors.totalthreads, mydic=authors.authors, sa=authors.sorted_authors_emails, yr=authors.years, ac=len(authors.authors))

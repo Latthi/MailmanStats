@@ -41,10 +41,10 @@ def plotBarGraph(data, outputfile, xlabel, ylabel, thumb = False, limitable = Fa
 
     fs = fill_style.Plain(bgcolor=color.lightblue)
     if not thumb:
-        yaxis = axis.Y(label="/b/15"+ylabel, format = "%d")
-        xaxis = axis.X(format=lambda x: "/a80/H"+x, label = "/b/15"+xlabel, tic_label_offset = (-3,0))
+        yaxis = axis.Y(label="/b/15/T"+ylabel, format = "%d")
+        xaxis = axis.X(format=lambda x: "/a80/11/P"+x, label = "/b/15/T"+xlabel, tic_label_offset = (-3,0))
         ar = area.T(size = (12*len(data)+50,400), x_coord = category_coord.T(cropped, 0), x_axis = xaxis, y_axis = yaxis, y_range = (0,None), legend = None)
-        ar.add_plot(bar_plot.T(data = cropped, fill_style = fs, data_label_format="/a75{}%d", data_label_offset=(3,10)))
+        ar.add_plot(bar_plot.T(data = cropped, fill_style = fs, data_label_format="/a75{}/11/T%d", data_label_offset=(3,10)))
     else:
         ar = area.T(size = (250,150), x_coord = category_coord.T(cropped, 0), y_range = (0,None), legend = None)
         ar.add_plot(bar_plot.T(data = cropped, fill_style = fs))
@@ -163,7 +163,7 @@ class Authors:
             self.authors[msg.from_mail].lastmsgdate = msg.date
             self.authors[msg.from_mail].lastmsgdatestr= time.ctime(msg.date)
 
-        if "Re:" not in msg.subject or not msg.subject:
+        if msg.isreply:
             self.authors[msg.from_mail].started += 1
             self.totalthreads += 1
         
@@ -285,23 +285,35 @@ class Author:
 class Message:
     def __init__(self, message):
         self.from_mail = None
-        self.subject = None
+        self.isreply = None
         self.date = None
-        self.subject = message['subject'] # FIXME we shouldn't store the whole subject
+        r = None
+
         try:
             r = MAILPROG.search(message['from'])
         except TypeError:
             if dbg:
                 print "Parsing error: From email '"+str(message['from'])+"'"
                 return
+        
         if not r:
             if dbg:
                 print "Parsing error: From email '"+message['from']+"'"
                 return
         else:
             self.from_mail = r.group(0)
+
+        try:
+            self.isreply = True if "Re:" in message['subject'] else False
+        except TypeError:
+            pass
+        
         for d in DATEPROG:
-            r = d.search(message['date'])
+            try:
+                r = d.search(message['date'])
+            except TypeError:
+                return
+
             if r:
                 try:
                     if len(r.group('year')) == 4:
@@ -400,7 +412,7 @@ if __name__ == "__main__":
             msg = Message(mbox[msgc])
             if options.filter and msg.from_mail not in filterlist:
                 continue
-            if msg.from_mail and msg.date and msg.subject and msg.month:
+            if msg.from_mail and msg.date and msg.month:
                 authors.parseMsg(msg)
         
         # If there are no new messages exit.
@@ -411,7 +423,7 @@ if __name__ == "__main__":
         # Calculate stats and generate charts.
         q = authors.calcStats()
 
-        #  Generate ml-report.html. FIXME disable js when users > 2000
+        #  Generate ml-report.html.
         f = open(outputdir+"/"+outputfile, 'w')
         t = pyratemp.Template(filename='report.tpl')
         result = t(heading=mlname, totalmails=authors.totalmails, totalthreads=authors.totalthreads, mydic=authors.authors, sa=authors.sorted_authors_emails, yr=authors.years, ac=len(authors.authors))

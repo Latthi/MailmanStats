@@ -1,7 +1,9 @@
 <html>
 <head>
 <title>Mailing List Stats</title>
+<!--(if len(sa) <= 1000)-->
 <script src="sorttable.js"></script>
+<!--(end)-->
 <style>
 body
 {

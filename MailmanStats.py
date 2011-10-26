@@ -4,12 +4,13 @@ from __future__ import division
 from threading import Thread
 from os import path, walk, mkdir
 from pychart import *
-import mailbox, sys, re, pyratemp, time, Queue, argparse, shutil, pickle
+import mailbox, sys, re, pyratemp, time, Queue, argparse, shutil, pickle, urllib2
 
 
 ### GLOBAL ###
 # Constants
 try:
+    VERSION = 0.9
     MONTH = "(?P<month>Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)"
     YEAR = "(?P<year>[0-9]{2,4})"
     DAY = "(Mon|Tue|Wed|Thu|Fri|Sat|Sun)"
@@ -22,11 +23,24 @@ try:
     theme.use_color = True
     theme.reinitialize()
 
-
 except KeyboardInterrupt:
     pass
 
 # Functions
+def CheckVersion(VERSION):
+    try: 
+        content = urllib2.urlopen('http://mailmanstats.latthi.com/version')
+        while True:
+            line = content.readline()
+            if len(line) == 0: break
+            cut = line.find(":")
+            ver = line[:cut]
+            message = line[cut+1:]
+            ver = float(ver)
+            if ver > VERSION: print "A newer version is available: ", ver, message
+    # If connection could not be established do nothing
+    except IOError: pass
+
 def plotBarGraph(data, outputfile, xlabel, ylabel, thumb = False, limitable = False):
     cropped = []
     can = canvas.init(outputfile)
@@ -372,6 +386,9 @@ if __name__ == "__main__":
         cached = False
         start = 0
 
+        # Check if there is a newer version avaiable.
+        CheckVersion(VERSION)
+        
         # Check if there is a cache file for that list.
         if path.exists(curdir+"/ml-"+mlname+"-cache.dat"):
             f = open(curdir+"/ml-"+mlname+"-cache.dat", "rb")

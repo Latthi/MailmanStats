@@ -10,7 +10,7 @@ import mailbox, sys, re, pyratemp, time, Queue, argparse, shutil, pickle, urllib
 ### GLOBAL ###
 # Constants
 try:
-    VERSION = 0.9
+    VERSION = "0.9"
     MONTH = "(?P<month>Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)"
     YEAR = "(?P<year>[0-9]{2,4})"
     DAY = "(Mon|Tue|Wed|Thu|Fri|Sat|Sun)"
@@ -27,17 +27,23 @@ except KeyboardInterrupt:
     pass
 
 # Functions
-def CheckVersion(VERSION):
+def versionToFloat(version):
+    version = version.split(".")
+    for i in xrange(len(version)):
+        version[i] = int(version[i])*10**-i
+    version = sum(version)
+    return version
+
+def checkVersion():
     try: 
         content = urllib2.urlopen('http://mailmanstats.latthi.com/version')
-        while True:
+        line = content.readline()
+        while line:
+            spline = line.split(":")
+            ver = spline[0]
+            message = spline[1][:-1]
+            if versionToFloat(ver) > VERSION: print "Version %s is available: %s" %  (ver, message)
             line = content.readline()
-            if len(line) == 0: break
-            cut = line.find(":")
-            ver = line[:cut]
-            message = line[cut+1:]
-            ver = float(ver)
-            if ver > VERSION: print "A newer version is available: ", ver, message
     # If connection could not be established do nothing
     except IOError: pass
 
@@ -387,7 +393,8 @@ if __name__ == "__main__":
         start = 0
 
         # Check if there is a newer version avaiable.
-        CheckVersion(VERSION)
+        VERSION = versionToFloat(VERSION)
+        checkVersion()
         
         # Check if there is a cache file for that list.
         if path.exists(curdir+"/ml-"+mlname+"-cache.dat"):

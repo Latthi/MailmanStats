@@ -45,7 +45,7 @@ def checkVersion():
             if versionToFloat(ver) > VERSION: print "Version %s is available: %s" %  (ver, message)
             line = content.readline()
     # If connection could not be established do nothing
-    except IOError: pass
+    except (IOError, IndexError): pass
 
 def plotBarGraph(data, outputfile, xlabel, ylabel, thumb = False, limitable = False):
     cropped = []

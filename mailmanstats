@@ -373,6 +373,8 @@ if __name__ == "__main__":
         parser.add_argument("-u", "--unmask", default=True, dest="masked", action="store_false", help="Use this option to show email addresses.")
         parser.add_argument("-d", "--debug", default=False, dest="debug", action="store_true", help="Use this option if you want to enable debug output.")
         parser.add_argument("-f", "--filter", default=None, type=argparse.FileType(), dest="filter", help="Select the file that includes the email address you wish your report to have. The file should have one address per line.")
+        parser.add_argument("-n", "--newer", default="", dest="timenewer", help="Use this option you want to generate stats for mails send earlier than the given date.")
+        parser.add_argument("--tformat", default="%a, %d %b %Y %H:%M:%S", dest="timeformat", help="Specify time format.")
         parser.add_argument("mbox", help="Mbox File")
         options = parser.parse_args()
 
@@ -391,6 +393,13 @@ if __name__ == "__main__":
         dbg = options.debug
         cached = False
         start = 0
+        newer = 0
+
+        if len(options.timenewer) > 0 :
+            newer = time.mktime(time.strptime(options.timenewer, options.timeformat))
+            
+            if dbg:
+                print "generate stats  messages newer than" + options.timeformat;
 
         # Check if there is a newer version avaiable.
         VERSION = versionToFloat(VERSION)
@@ -434,6 +443,9 @@ if __name__ == "__main__":
         # Parse all messages in mbox file.
         for msgc in xrange(start, len(mbox)):
             msg = Message(mbox[msgc])
+            
+            if msg.date <= newer:
+                continue
             if options.filter and msg.from_mail not in filterlist:
                 continue
             if msg.from_mail and msg.date and msg.month:

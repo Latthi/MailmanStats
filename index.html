@@ -1,0 +1,74 @@
+<!DOCTYPE HTML> 
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="./css/style.css" /> 
+<meta name="keywords" content="mailman stats mailmanstats statistics report HTML analytics mailing list mail" />
+<title>MailmanStats - Latthi</title>
+</head>
+<body>
+<div class="header"></div>
+<div id="screenshot">
+<div>
+<a href="./Mailman.png"><img alt="MailmanStats screenshot" src="./Mailman.png" /></a>
+</div>
+MailmanStats Screenshot
+</div>
+
+<div class="content">
+<h1>MailmanStats</h1>
+<table>
+<tr><td><b>Authors:</b></td><td>George Chatzisofroniou, Constantinos Xanthopoulos</td></tr>
+<tr><td><b>Version:</b></td><td>0.9</td></tr>
+<tr><td><b>Licence:</b></td><td><a href="http://www.opensource.org/licenses/bsd-license.html">Modified BSD License</a></td></tr>
+<tr><td><b>Credits:</b></td><td>Roland Koebler - <a href="http://www.simple-is-better.org/template/pyratemp.html">pyratemp</a>, Stuart Langridge - <a href="http://www.kryogenix.org/code/browser/sorttable/">sorttable</a>, Yasushi Saito - <a href="http://home.gna.org/pychart/">PyChart</a></td></tr>
+<tr><td><b>Update:</b></td><td>29/10/11</td></tr>
+</table>
+
+<br>
+<div id="contents">
+<h3>Contents</h3>
+<ul>
+<li><a href="#desc">Description</a></li>
+<li><a href="#examples">Examples</a></li>
+<li><a href="#dl">Download</a></li>
+<li><a href="#inst">Installation</a></li>
+<li><a href="#usage">Usage</a></li>
+<li><a href="#bugs">Bugs</a></li>
+</ul>
+</div>
+
+<a id="desc"></a><h2>Description</h2>
+<p>MailmanStats is a python software that generates an HTML report for a Mailman based mailing list. Using the mailbox path (given as argument) it produces useful information such as mails sent per user,
+threads created per user, mails sent per month, activity per user etc.
+ In addition, it creates statistics and submits them by using charts. Released under the <a href="http://www.opensource.org/licenses/bsd-license.html">Modified BSD License</a>.</p>
+
+<a id="examples"></a><h2>Examples</h2>
+<p>You may see a live example of the software running by <a href="http://www.hellug.gr">Hellug</a> on the <a href="http://lists.hellug.gr/stats.php">relevant page</a>.</p> 
+
+<a id="dl"></a><h2>Download</h2>
+<p>Version 0.9 - <a href="https://github.com/downloads/Latthi/MailmanStats/MailmanStats-v.0.9.tar.gz">Download</a></p>
+
+<a id="inst"></a><h2>Installation</h2>
+<p>Simply, extract all the files in the same directory. Type <span class="code">./mailmanstats.py &lt;mbox path&gt;</span> to run it.</p>
+
+<a id="usage"></a><h2>Usage</h2>
+<p>MailmanStats only takes your mailing list's mailbox as an argument. Mailbox is the file containing all the messages sent to a particular mailing list.
+As for Mailman, your mailing list's mailbox is usually located in archives/private/listname.mbox/listname.mbox which is under mailman's root directory.</p>
+<p>Some options are also available:</p>
+
+<ul class="nobullets" >
+<li><b>--output</b> or <b>-o</b>: Use this option to change the output directory. Default: Current working directory.</li>
+<li><b>--limit</b> or <b>-l</b>: Choose the number of authors you want to be shown in the charts. Default top 100 authors</li>
+<li><b>--unmask</b> or <b>-u</b>: Use this option to unmask email addresses at the results.</li>
+<li><b>--debug</b> or <b>-d</b>: Use this option to enable debug output.</li>
+<li><b>--filter</b> or <b>-f</b>: Select the file that includes the email address you wish your report to have. The file should have one address per line.</li>
+</ul>
+<a id="bugs"></a><h2>Bugs</h2>
+<p>To inform us about a bug or even send us a patch please use <a href="https://github.com/Latthi/MailmanStats/issues">GitHub's Issue tracking interface</a>.
+</div>
+
+<div id="footer">
+<p><a href="http://www.latthi.com"><img class="footer-logo" src="./latthi-small.png"></img></a></p>
+</div>
+</body>
+</html>

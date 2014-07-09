@@ -10,13 +10,14 @@ import mailbox, sys, re, pyratemp, time, Queue, argparse, shutil, pickle, urllib
 ### GLOBAL ###
 # Constants
 try:
-    VERSION = "0.9"
+    VERSION = "1.0"
+    ALIASES = {}
     MONTH = "(?P<month>Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)"
     YEAR = "(?P<year>[0-9]{2,4})"
     DAY = "(Mon|Tue|Wed|Thu|Fri|Sat|Sun)"
     TIME = "(?P<time>[0-9:]{5,8})"
     DATE = "(?P<date>[0-9]{1,2})"
-    MAILPROG = re.compile("([A-Za-z0-9._%+-]+)[@]([A-Za-z0-9.-]+)[.]([A-Za-z]{2,4})")
+    MAILPROG = re.compile("([A-Za-z0-9._%+-]+)(?:[@]| at )([A-Za-z0-9.-]+)[.]([A-Za-z]{2,4})")
     DATEREGEX = (DAY+"[,][ ]"+DATE+"[ ]"+MONTH+"[ ]"+YEAR+"[ ]"+TIME, DAY+"[ ]"+MONTH+"[ ]"+DATE+"[ ]"+TIME+"[ ]"+YEAR, DATE+"[ ]"+MONTH+"[ ]"+YEAR+"[ ]"+TIME, DAY+"[ ]"+MONTH+"[ ]+"+DATE+"[ ]"+TIME+" "+YEAR)
     DATEPROG = [re.compile(d) for d in DATEREGEX]
     theme.scale_factor = 1.5
@@ -173,6 +174,7 @@ class Authors:
         self.lastyear = 0
 
     def parseMsg(self, msg):
+        msg.from_mail = ALIASES.get(msg.from_mail, msg.from_mail)
         if (msg.from_mail not in self.authors):
             author = Author(msg.from_mail, msg.date)
             self.authors[msg.from_mail] = author

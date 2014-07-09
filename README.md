@@ -1,2 +1,2 @@
 # MailmanStats
-Please, visit the [project's official webpage](http://mailmanstats.latthi.com/ "project's official webpage").
+Please, visit the [project's official webpage](https://latthi.github.io/MailmanStats/ "project's official webpage").
